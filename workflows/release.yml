@@ -1,0 +1,27 @@
+name: Releaser
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions:
+  contents: write 
+  pull-requests: write 
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create release
+        id: create-release
+        uses: Koenigseder/semver-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          release-body: ${{ github.event.pull_request.body }} 
+          base-branch: main 
+          semver-prefix: v #
+          semver-start-version: 1.0.0
