@@ -1,13 +1,12 @@
 locals {
   # Core naming and identification
-  cluster_name = var.env_name
+  cluster_name = module.label.env_name
   app_url      = ["https://${var.external_domain}"]
 
   # Extra access entries configuration
-  # for CI/CD and other external access
   extra_access_entries = {
     github_actions = {
-      principal_arn = "arn:aws:iam::111222333:role/your-ci-cd-role"
+      principal_arn = "arn:aws:iam::203960437845:role/GitHubActions-helm-match"
 
       policy_associations = {
         match = {
@@ -27,6 +26,13 @@ locals {
       }
     }
   }
+}
+module "label" {
+  source            = "git::https://github.com/ad-signalio/terraform-utils-private.git//generic/tf-hosted-modules/tf-dt-naming?ref=v0.0.59-generic-tf-hosted-modules-tf-dt-naming"
+  env_use           = var.env_use
+  env_id            = var.env_id
+  env_additional_id = var.env_additional_id
+  env_region        = var.env_region
 }
 
 data "aws_caller_identity" "current" {}
@@ -52,8 +58,8 @@ locals {
 
 module "vpc" {
   source                  = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-vpc/v1.0.0"
-  env_name                = var.env_name
-  tags                    = var.tags
+  env_name                = module.label.env_name
+  tags                    = module.label.tags
   cidr                    = var.cidr
   availability_zone_count = 2
 }
@@ -61,8 +67,8 @@ module "vpc" {
 module "eks" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks/v1.0.3"
 
-  env_name                 = var.env_name
-  tags                     = var.tags
+  env_name                 = module.label.env_name
+  tags                     = module.label.tags
   subnets_in_az            = tolist(local.subnets_in_az)
   node_count               = var.eks_compute_nodes
   node_instance_type       = var.eks_compute_node_type
@@ -73,15 +79,15 @@ module "eks" {
 
   admin_access_sso_permission_set_names = var.admin_access_sso_permission_set_names
   admin_access_role_names               = var.admin_access_role_names
-  secret_naming_convention              = var.env_name
+  secret_naming_convention              = module.label.env_name
 }
 
 
 module "eks-load-balancer-controller" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks-aws-lb-ctrl/v1.0.0"
 
-  env_name         = var.env_name
-  tags             = var.tags
+  env_name         = module.label.env_name
+  tags             = module.label.tags
   eks_cluster      = module.eks.eks_cluster
   eks_cluster_auth = module.eks.eks_cluster_auth
   vpc              = module.vpc.vpc
@@ -95,8 +101,8 @@ module "iam_role_for_service_account" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-iam-roles/v1.0.0"
 
   s3_bucket_name             = "${local.cluster_name}-primary"
-  env_name                   = var.env_name
-  tags                       = var.tags
+  env_name                   = module.label.env_name
+  tags                       = module.label.tags
   oidc_provider_arn          = module.eks.eks_cluster.oidc_provider_arn
   oidc_issuer_url            = module.eks.eks_cluster.cluster_oidc_issuer_url
   kubernetes_namespace       = var.k8s_namespace
@@ -107,14 +113,14 @@ module "iam_role_for_service_account" {
   ## set allow_aws_secret_manager_access to false
   ## allow_aws_secret_manager_access = false
   ## and remove secret_naming_convention var
-  secret_naming_convention = var.env_name
+  secret_naming_convention = module.label.env_name
 }
 
 module "elasticache_redis" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-elasticache-redis/v1.0.1"
 
-  env_name        = var.env_name
-  tags            = var.tags
+  env_name        = module.label.env_name
+  tags            = module.label.tags
   vpc             = module.vpc.vpc
   az              = var.availability_zone_name
   private_subnets = module.vpc.private_subnets
@@ -123,7 +129,7 @@ module "elasticache_redis" {
   ## set create_aws_secret to false
   ## create_aws_secret = false
   ## and remove secret_naming_convention var
-  secret_naming_convention = var.env_name
+  secret_naming_convention = module.label.env_name
 
   depends_on = [module.eks]
 }
@@ -131,8 +137,8 @@ module "elasticache_redis" {
 module "rds-postgres" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-rds-pg/v1.0.1"
 
-  env_name               = var.env_name
-  tags                   = var.tags
+  env_name               = module.label.env_name
+  tags                   = module.label.tags
   subnet_ids             = tolist(module.vpc.private_subnets)
   instance_class         = var.rds_instance_class
   allocated_storage      = 20
@@ -143,7 +149,7 @@ module "rds-postgres" {
   ## set create_aws_secret to false
   ## create_aws_secret = false
   ## and remove secret_naming_convention var
-  secret_naming_convention = var.env_name
+  secret_naming_convention = module.label.env_name
   depends_on               = [module.eks]
 
   deletion_protection = false
@@ -152,8 +158,8 @@ module "rds-postgres" {
 module "efs" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-efs/v1.0.0"
 
-  env_name                          = var.env_name
-  tags                              = var.tags
+  env_name                          = module.label.env_name
+  tags                              = module.label.tags
   eks_cluster_endpoint              = module.eks.eks_cluster_endpoint
   eks_cluster_certificate           = module.eks.eks_cluster_certificate
   eks_cluster_token                 = module.eks.eks_cluster_token
@@ -169,7 +175,7 @@ module "efs" {
 module "s3-active-storage" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-s3-active-storage/v1.0.0"
 
-  env_name = var.env_name
+  env_name = module.label.env_name
   app_url  = local.app_url
-  tags     = var.tags
+  tags     = module.label.tags
 }
