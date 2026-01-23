@@ -18,6 +18,10 @@ terraform {
       source  = "hashicorp/random"
       version = ">= 3.1"
     }
+    argocd = {
+      source  = "argoproj-labs/argocd"
+      version = "7.11.2"
+    }
   }
 }
 
@@ -47,3 +51,7 @@ provider "helm" {
   }
 }
 
+provider "argocd" {
+  server_addr = "argo.ops.ad-signal.io:443"
+  auth_token  = var.argocd_api_key
+}

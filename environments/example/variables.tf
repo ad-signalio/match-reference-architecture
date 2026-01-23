@@ -22,12 +22,40 @@ variable "tags" {
 }
 
 # Variables specific to self hosted match environments
-variable "env_name" {
+variable "env_id" {
   description = "The name of the environment, used to name terraformed resources"
   type        = string
   validation {
-    condition     = length(var.env_name) >= 3 && length(var.env_name) <= 30 && can(regex("^[a-zA-Z][a-zA-Z0-9-]*$", var.env_name))
-    error_message = "env_name must start with a letter and be 3-30 characters long, containing only letters, numbers, and hyphens."
+    condition     = length(var.env_id) >= 3 && length(var.env_id) <= 30 && can(regex("^[a-zA-Z][a-zA-Z0-9-]*$", var.env_id))
+    error_message = "env_id must start with a letter and be 3-30 characters long, containing only letters, numbers, and hyphens."
+  }
+}
+
+variable "env_use" {
+  description = "The use case for the environment (e.g., test, staging, prod)"
+  type        = string
+  validation {
+    condition     = length(var.env_use) >= 3 && length(var.env_use) <= 20 && can(regex("^[a-zA-Z][a-zA-Z0-9-]*$", var.env_use))
+    error_message = "env_use must start with a letter and be 3-20 characters long, containing only letters, numbers, and hyphens."
+  }
+}
+
+variable "env_region" {
+  description = "The region identifier for the environment (e.g., us1, eu1)"
+  type        = string
+  validation {
+    condition     = length(var.env_region) >= 2 && length(var.env_region) <= 10 && can(regex("^[a-zA-Z][a-zA-Z0-9-]*$", var.env_region))
+    error_message = "env_region must start with a letter and be 2-10 characters long, containing only letters, numbers, and hyphens."
+  }
+}
+
+variable "env_additional_id" {
+  description = "An additional identifier for the environment (e.g., sm, db)"
+  type        = string
+  default     = ""
+  validation {
+    condition     = length(var.env_additional_id) <= 10 && can(regex("^[a-zA-Z0-9-]*$", var.env_additional_id))
+    error_message = "env_additional_id must be up to 10 characters long, containing only letters, numbers, and hyphens."
   }
 }
 
