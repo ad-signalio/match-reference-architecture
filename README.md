@@ -137,7 +137,7 @@ This reference architecture includes pre-configured sizing templates there are c
 
 ### Small Deployment
 
-- **Compute**: 1 node c8i.4xlarge (16 vCPU, 128 GB RAM)
+- **Compute**: 1 node c8i.4xlarge (16 vCPU, 32 GB RAM)
 - **Database**: db.m5.4xlarge (16 vCPU, 64 GB RAM)
 - **Throughput**: 1 Hour of content will take approximately 1 hour to process
 
@@ -149,7 +149,7 @@ This reference architecture includes pre-configured sizing templates there are c
 
 ### Large Deployment
 
-- **Compute**: 12 nodes × m6i.4xlarge (16 vCPU, 64 GB RAM each)
+- **Compute**: 12 nodes × m8i.4xlarge (16 vCPU, 32 GB RAM each)
 - **Database**: db.m5.4xlarge (16 vCPU, 64 GB RAM)
 - **Throughput**: 7.5 Hours of content will take approximately 1 hour to process
 
