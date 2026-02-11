@@ -65,7 +65,7 @@ module "vpc" {
 }
 
 module "eks" {
-  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks/v1.0.3"
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks/v1.0.4"
 
   env_name                 = module.label.env_name
   tags                     = module.label.tags
