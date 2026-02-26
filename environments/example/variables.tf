@@ -87,26 +87,6 @@ variable "external_domain" {
   }
 }
 
-variable "eks_compute_nodes" {
-  description = "Number of EKS worker nodes to create"
-  type        = number
-  default     = 2
-  validation {
-    condition     = var.eks_compute_nodes >= 1 && var.eks_compute_nodes <= 200
-    error_message = "eks_compute_nodes must be between 1 and 200."
-  }
-}
-
-variable "eks_compute_node_type" {
-  description = "EC2 instance type for EKS worker nodes"
-  type        = string
-  default     = "t3.2xlarge"
-  validation {
-    condition     = can(regex("^[tmcr][0-9]+[a-z]*\\.[a-z0-9]+$", var.eks_compute_node_type))
-    error_message = "eks_compute_node_type must be a valid EC2 instance type (e.g., t3.2xlarge, m5.large)."
-  }
-}
-
 variable "rds_instance_class" {
   description = "RDS instance class for the PostgreSQL database"
   type        = string
@@ -140,7 +120,7 @@ variable "admin_access_role_names" {
 }
 
 variable "install_helm_charts" {
-  description = "value to determine whether to install helm charts for eks load balancer controller"
+  description = "value to determine whether to install helm charts for eks load balancer controller, keda, etc"
   type        = bool
   default     = true
 }
