@@ -18,6 +18,7 @@ This reference architecture deploys a complete AWS infrastructure stack includin
 - **S3 Storage** - Object storage with encryption and versioning
 - **IAM Roles & Policies** - Least-privilege access controls
 - **Load Balancer Controller** - AWS Application Load Balancer integration
+- **KEDA** - Event-driven autoscaler for Kubernetes workloads
 - **EFS** - EFS Volumes for use as shared storage on the EKS cluster
 - **Monitoring & Logging** - CloudWatch integration and observability stack
 
@@ -152,6 +153,14 @@ This reference architecture includes pre-configured sizing templates there are c
 - **Compute**: 12 nodes × m8i.4xlarge (16 vCPU, 32 GB RAM each)
 - **Database**: db.m5.4xlarge (16 vCPU, 64 GB RAM)
 - **Throughput**: 7.5 Hours of content will take approximately 1 hour to process
+
+## Event Driven Autoscaling (KEDA)
+
+[KEDA](https://keda.sh/) (Kubernetes Event-driven Autoscaling).
+
+KEDA is installed by default as part of this reference architecture to enable autoscaling capabilities for the Match environment.
+
+If you prefer to install KEDA through other methods (or map manage it separately), you can disable the automated installation by setting the `install_helm_charts` variable to `false`.
 
 ### Initial Terraform State Directory
 
@@ -289,6 +298,8 @@ module "rds-postgres" {
 | **Application Configuration** |
 | `external_domain` | Application domain | `test-company.sbox.as-priv.net` | `myapp.prod.as-priv.net` |
 | `k8s_namespace` | Kubernetes namespace | `match` | `production` |
+| **Feature Configuration** |
+| `install_helm_charts` | Enable installation of Helm charts (KEDA, LB Controller) | `true` | `false` |
 
 ### Example Configuration
 

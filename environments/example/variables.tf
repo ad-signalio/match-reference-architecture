@@ -140,7 +140,7 @@ variable "admin_access_role_names" {
 }
 
 variable "install_helm_charts" {
-  description = "value to determine whether to install helm charts for eks load balancer controller"
+  description = "value to determine whether to install helm charts for eks load balancer controller, keda, etc"
   type        = bool
   default     = true
 }

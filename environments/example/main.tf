@@ -179,3 +179,10 @@ module "s3-active-storage" {
   app_url  = local.app_url
   tags     = module.label.tags
 }
+
+module "keda" {
+  source = "git::https://github.com/ad-signalio/terraform-utils-private.git?ref=generic/tf-hosted-modules/tf-dt-keda/v1.0.0"
+
+  enabled      = var.install_helm_charts
+  install_crds = true
+}
