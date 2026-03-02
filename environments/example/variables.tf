@@ -31,6 +31,15 @@ variable "env_id" {
   }
 }
 
+variable "env_name" {
+  description = "The name of the environment, used for labeling and tagging resources"
+  type        = string
+  validation {
+    condition     = length(var.env_name) >= 3 && length(var.env_name) <= 50 && can(regex("^[a-zA-Z][a-zA-Z0-9-]*$", var.env_name))
+    error_message = "env_name must start with a letter and be 3-50 characters long, containing only letters, numbers, and hyphens."
+  }
+}
+
 variable "env_use" {
   description = "The use case for the environment (e.g., test, staging, prod)"
   type        = string
@@ -56,6 +65,15 @@ variable "env_additional_id" {
   validation {
     condition     = length(var.env_additional_id) <= 10 && can(regex("^[a-zA-Z0-9-]*$", var.env_additional_id))
     error_message = "env_additional_id must be up to 10 characters long, containing only letters, numbers, and hyphens."
+  }
+}
+
+variable "owning_user_email" {
+  description = "Email of the Admin user to access Match."
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", var.owning_user_email))
+    error_message = "owning_user_email must be a valid email address."
   }
 }
 
