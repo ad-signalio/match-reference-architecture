@@ -157,3 +157,11 @@ module "application-secrets" {
   secret_naming_convention = module.label.env_name
   owning_user_email        = var.owning_user_email
 }
+
+module "keda" {
+  source = "git::https://github.com/ad-signalio/terraform-utils-private.git?ref=generic/tf-hosted-modules/tf-dt-keda/v1.0.1"
+
+  enabled          = var.install_helm_charts
+  install_crds     = true
+  eks_cluster_name = module.eks.eks_cluster_name
+}
