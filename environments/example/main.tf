@@ -5,7 +5,7 @@ locals {
 }
 
 module "label" {
-  source            = "git::https://github.com/ad-signalio/terraform-utils-private.git//generic/tf-hosted-modules/tf-dt-naming?ref=v0.0.59-generic-tf-hosted-modules-tf-dt-naming"
+  source            = "git::https://github.com/ad-signalio/terraform-utils.git?ref=generic/tf-hosted-modules/tf-dt-naming/v1.0.0"
   env_use           = var.env_use
   env_id            = var.env_id
   env_additional_id = var.env_additional_id
@@ -159,8 +159,9 @@ module "application-secrets" {
 }
 
 module "keda" {
-  source = "git::https://github.com/ad-signalio/terraform-utils-private.git?ref=generic/tf-hosted-modules/tf-dt-keda/v1.0.1"
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=generic/tf-hosted-modules/tf-dt-keda/v1.0.3"
 
+  depends_on       = [module.eks]
   enabled          = var.install_helm_charts
   install_crds     = true
   eks_cluster_name = module.eks.eks_cluster_name
