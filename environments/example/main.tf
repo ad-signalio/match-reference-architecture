@@ -53,22 +53,14 @@ module "eks" {
 }
 
 module "ingress_resources" {
-  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-ingress-resources/v1.0.1"
+  source           = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-ingress-resources/v1.0.2"
+  eks_cluster_name = module.eks.eks_cluster_name
 
-  eks_cluster_name        = module.eks.eks_cluster_name
-  eks_cluster_endpoint    = module.eks.eks_cluster_endpoint
-  eks_cluster_certificate = module.eks.eks_cluster_certificate
-  eks_cluster_token       = module.eks.eks_cluster_token
+
 }
 
 module "auto_mode_storage_class" {
-  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-auto-mode-efs-storage-class/v1.0.1"
-
-
-  eks_cluster_name        = module.eks.eks_cluster_name
-  eks_cluster_endpoint    = module.eks.eks_cluster_endpoint
-  eks_cluster_certificate = module.eks.eks_cluster_certificate
-  eks_cluster_token       = module.eks.eks_cluster_token
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-auto-mode-efs-storage-class/v1.0.2"
 }
 
 module "iam_role_for_service_account" {
@@ -129,16 +121,13 @@ module "rds-postgres" {
 }
 
 module "efs" {
-  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-efs/v1.0.6"
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-efs/v1.0.7"
 
-  env_name                = module.label.env_name
-  tags                    = module.label.tags
-  eks_cluster_endpoint    = module.eks.eks_cluster_endpoint
-  eks_cluster_certificate = module.eks.eks_cluster_certificate
-  eks_cluster_token       = module.eks.eks_cluster_token
-  cluster_name_prefix     = local.cluster_name
-  private_subnets         = module.vpc.private_subnets_detail
-  vpc_security_group_ids  = [module.eks.eks_cluster_node_sg, module.eks.cluster_primary_security_group_id, module.eks.cluster_security_group_id]
+  env_name               = module.label.env_name
+  tags                   = module.label.tags
+  cluster_name_prefix    = local.cluster_name
+  private_subnets        = module.vpc.private_subnets_detail
+  vpc_security_group_ids = [module.eks.eks_cluster_node_sg, module.eks.cluster_primary_security_group_id, module.eks.cluster_security_group_id]
 }
 
 module "s3-active-storage" {
