@@ -56,6 +56,10 @@ Your AWS credentials must have permissions for:
 - RDS instance management
 - CloudWatch and logging services
 
+**We recommend using AWS SSO IAM roles rather than IAM users using static credentials**
+
+Please see comments in `main.tf` if you choose to use static credentials as a user instead of iam roles for AWS EKS authentication.
+
 Sample wide-permission IAM policy (for testing only — use least-privilege in production):
 
 ```json
