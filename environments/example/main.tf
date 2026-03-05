@@ -4,6 +4,51 @@ locals {
   app_url      = ["https://${var.external_domain}"]
 }
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+## Fetch SSO permission sets based on provided group names and roles
+## Remove lines 10 - 48 and line 94 if you are using static credentials to run terraform
+data "aws_iam_roles" "sso_permset" {
+  for_each    = toset(var.admin_access_sso_permission_set_names)
+  name_regex  = "AWSReservedSSO_${each.key}.*"
+  path_prefix = "/aws-reserved/sso.amazonaws.com/"
+}
+
+locals {
+  infra_admin_roles = {
+    for role_name in var.admin_access_role_names : role_name => {
+      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${role_name}"
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
+
+  permission_set_roles = flatten([
+    for permsets in data.aws_iam_roles.sso_permset : permsets.arns
+  ])
+
+  infra_admin_sso_permission_sets = {
+    for permset_role in local.permission_set_roles : element(split("/", permset_role), -1) => {
+      principal_arn = permset_role
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
+}
+
 module "label" {
   source            = "git::https://github.com/ad-signalio/terraform-utils.git?ref=generic/tf-hosted-modules/tf-dt-naming/v1.0.0"
   env_use           = var.env_use
@@ -11,9 +56,6 @@ module "label" {
   env_additional_id = var.env_additional_id
   env_region        = var.env_region
 }
-
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
 
 locals {
   # AWS account and region information
@@ -36,7 +78,7 @@ module "vpc" {
 }
 
 module "eks" {
-  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks/v1.0.13"
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks/v1.0.14"
 
   env_name      = module.label.env_name
   tags          = module.label.tags
@@ -47,9 +89,9 @@ module "eks" {
   iam_role_use_name_prefix = false
   vpc_cidr_block           = var.cidr
 
-  admin_access_sso_permission_set_names = var.admin_access_sso_permission_set_names
-  admin_access_role_names               = var.admin_access_role_names
-  secret_naming_convention              = module.label.env_name
+  secret_naming_convention = module.label.env_name
+  access_entries           = merge(local.infra_admin_roles, local.infra_admin_sso_permission_sets)
+
 }
 
 module "ingress_resources" {
