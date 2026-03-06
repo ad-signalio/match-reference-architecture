@@ -113,14 +113,14 @@ Recommended actions:
 
 2. **Create environment directory**
    ```bash
-   cp -r environments/example environments/your-company-name
-   cd environments/your-company-name
+   cp -r environments/example/infrastructure environments/your-company-name/infrastructure
+   cd environments/your-company-name/infrastructure
    ```
 
 3. **Configure variables**
    ```bash
    # Edit the  an example .tfvars file with your specific values
-   cp <size>.tfvars your-comanay-name.tfvars
+   cp <size>.tfvars your-company-name.tfvars
    vim your-company-name.tfvars
    # Edit the backend.tf to use your state bucket and statefile
    vim backend.tf
@@ -292,9 +292,6 @@ module "rds-postgres" {
 | `region` | AWS region | `us-east-1` | `us-west-2`, `eu-west-1` |
 | `availability_zone_name` | Specific AZ for single-zone resources | - | `us-east-1a` |
 | `cidr` | VPC CIDR block | `10.25.0.0/16` | `10.0.0.0/16` |
-| **EKS Configuration** |
-| `eks_compute_nodes` | Number of worker nodes | `2` | `3`, `5` |
-| `eks_compute_node_type` | EC2 instance type | `t3.2xlarge` | `t3.large`, `m5.xlarge` |
 | **Database Configuration** |
 | `rds_instance_class` | RDS PostgreSQL instance class | `db.t3.small` | `db.t3.medium`, `db.r5.large` |
 | **Storage Configuration** |
@@ -319,10 +316,6 @@ availability_zone_name = "us-east-1a"
 # Network Configuration
 cidr            = "10.25.0.0/16"
 external_domain = "your-company.prod.as-priv.net"
-
-# EKS Configuration
-eks_compute_nodes     = 3
-eks_compute_node_type = "t3.large"
 
 # Database Configuration
 rds_instance_class = "db.t3.medium"
