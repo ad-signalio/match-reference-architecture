@@ -191,3 +191,13 @@ module "keda" {
   install_crds_separately = false
   create_match_namespace  = false
 }
+
+module "external_dns_iam" {
+  count = var.create_external_dns_iam_role ? 1 : 0
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks-aws-external-dns-ctrlr-iam/v1.0.0"
+
+  oidc_provider_arn          = module.eks.eks_cluster.oidc_provider_arn
+  env_name          = module.label.env_name
+  domain_name       = var.external_domain
+  use_name_prefix   = true
+}

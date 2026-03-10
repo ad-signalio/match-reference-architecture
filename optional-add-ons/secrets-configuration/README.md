@@ -24,7 +24,27 @@ The chart creates a Kubernetes ServiceAccount annotated with an IAM role ARN. Th
 
 ## Prerequisites
 
-1. **AWS Secrets Manager** - Secrets must be created in AWS Secrets Manager (typically provisioned by Terraform)
+1. **AWS Secrets Manager** - Secrets must be created in AWS Secrets Manager.
+
+If you have used the reference architecture Terraform modules, the RDS, Redis, Owning User Credentials and API secrets will automatically be stored in AWS Secrets Manager. 
+
+**You must manually create both the honeybadger and docker secrets in AWS Secrets Manager. These values will be provided securely by Snicket Labs to you.**
+
+
+```bash
+aws secretsmanager create-secret \
+--name match-docker-secret \
+--description "Docker Hub credentials (dockerconfigjson)" \
+--region $YOUR_REGION\
+--secret-string $SECRET_JSON
+
+aws secretsmanager create-secret \
+--name match-honeybadger-secret \
+--description "Honeybadger api secret" \
+--region $YOUR_REGION\
+--secret-string $SECRET_API_KEY
+```
+
 2. **IAM Role** - An IAM role with access to read secrets from AWS Secrets Manager
 3. **AWS Secrets Store CSI Driver** - Must be installed in the EKS cluster
 4. **ASCP for Kubernetes** - The AWS provider for the Secrets Store CSI Driver

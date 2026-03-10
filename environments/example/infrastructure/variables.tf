@@ -110,3 +110,9 @@ variable "install_helm_charts" {
   type        = bool
   default     = true
 }
+
+variable "create_external_dns_iam_role" {
+  description = "Create an IAM role for ExternalDNS with permissions to manage Route53 records for the specified domain."
+  type        = bool
+  default     = true
+}
