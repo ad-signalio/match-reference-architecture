@@ -175,7 +175,7 @@ module "s3-active-storage" {
 }
 
 module "application-secrets" {
-  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-application-secrets/v1.0.2"
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-application-secrets/v1.0.3"
 
   env_name                 = module.label.env_name
   tags                     = module.label.tags
