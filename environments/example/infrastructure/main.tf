@@ -184,7 +184,7 @@ module "application-secrets" {
 }
 
 module "keda" {
-  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=generic/tf-hosted-modules/tf-dt-keda/v1.0.4"
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=generic/tf-hosted-modules/tf-dt-keda/v1.0.5"
 
   depends_on              = [module.eks]
   enabled                 = var.install_helm_charts
