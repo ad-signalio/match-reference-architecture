@@ -34,7 +34,7 @@ Before using this reference architecture, ensure you have:
 
 ### Provider Version Requirements
 
-This reference architecture requires the following provider versions (as defined in `environments/test-company/provider.tf`):
+This reference architecture requires the following provider versions (as defined in `environments/example/infrastructure/provider.tf`):
 
 | Provider | Minimum Version | Purpose |
 |----------|----------------|---------|
@@ -107,7 +107,7 @@ Recommended actions:
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/ad-signalio/match-reference-architecture.git
    cd match-reference-architecture
    ```
 
@@ -124,7 +124,31 @@ Recommended actions:
    vim your-company-name.tfvars
    # Edit the backend.tf to use your state bucket and statefile
    vim backend.tf
-   # Edit the main.tf to edit the local variable block
+
+3. **Configure backend and remote state**
+Bring your own remote state store or see [Terraform State](#terraform-state) to create an S3 bucket to use, or provide an existing S3 bucket.
+
+Edit `environments/your-company-name/infrastructure/backend.tf` to use your state bucket and statefile
+```
+terraform {
+  backend "s3" {
+    bucket       = "my-s3-bucket"
+    key          = "environments/example/infrastructure/s3/terraform.tfstate"
+    region       = "your-region"
+    use_lockfile = true
+    encrypt      = true
+
+  }
+}
+```
+
+4. **Configure variables**
+Configure the TFVARS for your environment, Configuration section https://github.com/ad-signalio/match-reference-architecture/tree/main?tab=readme-ov-file#configuration 
+
+
+```bash
+cp <size>.tfvars your-company-name.tfvars
+vim your-company-name.tfvars
     vim main.tf
 
    ```
@@ -135,6 +159,32 @@ Recommended actions:
    terraform plan -var-file="your-company-name.tfvars"
    terraform apply -var-file="your-company-name.tfvars"
    ```
+
+### Terraform State
+
+It's recommended you use a suitable [remote state](https://developer.hashicorp.com/terraform/language/state/remote) data store with Terraform.
+
+The `initial-state/` directory contains a Terraform configurations for creating an S3 state bucket for remote terraform state storage. 
+
+
+Each initial-state environment contains:
+
+```
+initial-state/your-company/
+├── main.tf               # S3 state bucket module configuration
+├── providers.tf          # AWS provider configuration
+└── outputs.tf            # Bucket information outputs
+```
+
+**Purpose**: Creates encrypted S3 buckets with versioning for Teraform state locking, providing a secure foundation for Terraform remote state management.
+
+**Usage**:
+```bash
+cd initial-state/your-company
+terraform init
+terraform apply
+```
+
 
 ## Deployment Sizing Options
 
@@ -166,36 +216,15 @@ KEDA is installed by default as part of this reference architecture to enable au
 
 If you prefer to install KEDA through other methods (or map manage it separately), you can disable the automated installation by setting the `install_helm_charts` variable to `false`.
 
-### Initial Terraform State Directory
-
-The `initial-state/` directory contains Terraform configurations for creating the S3 state buckets required for remote state storage. This is a **prerequisite step** that must be completed before deploying the main infrastructure.
-
-Each initial-state environment contains:
-
-```
-initial-state/your-company/
-├── main.tf               # S3 state bucket module configuration
-├── providers.tf          # AWS provider configuration
-└── outputs.tf            # Bucket information outputs
-```
-
-**Purpose**: Creates encrypted S3 buckets with versioning for Teraform state locking, providing a secure foundation for Terraform remote state management.
-
-**Usage**:
-```bash
-cd initial-state/your-company
-terraform init
-terraform apply
-```
-
 ### Environment Directory Structure
 
 Each environment contains:
 
 ```
 your-environment/
-├── backend.tf            # Terraform state backend configuration
+├── backend.tf           # Terraform state backend configuration
 ├── main.tf              # Main infrastructure resources
+├── outputs.tf           # Outputs useful info for deploying the match helm chart
 ├── provider.tf          # AWS, Kubernetes, and Helm providers
 ├── variables.tf         # Variable definitions
 └── your-env.tfvars      # Environment-specific values
@@ -203,16 +232,30 @@ your-environment/
 
 ### Secrets Management
 
-The reference implementation use AWS Secrets Manager with the [AWS ASCP Provider](https://docs.aws.amazon.com/secretsmanager/latest/userguide/ascp-eks-installation.html) installed as an EKS add on.
+The reference implementation use AWS Secrets Manager with the [AWS ASCP Provider](https://docs.aws.amazon.com/secretsmanager/latest/userguide/ascp-eks-installation.html) installed as an EKS add on. 
+
+The current infrastructure has secret creation "baked in" at different stages.
 
 This will:
-- Create an IAM policy to allow access to specific secrets (`match-docker-secret` and secrets beginning with your chosen secret naming convention)
-- Inject the elasticache config details into a secret in AWS Secrets Manager after creation
-- Inject the RDS config details into a secret in AWS Secrets Manager after creation
+- [Create an IAM policy](https://github.com/ad-signalio/terraform-utils/blob/main/aws/tf-hosted-modules/tf-dt-eks/iam.tf) to allow access to specific secrets (`match-docker-secret` and secrets beginning with your chosen secret naming convention)
+- Inject the [elasticache config details](https://github.com/ad-signalio/terraform-utils/blob/main/aws/tf-hosted-modules/tf-dt-elasticache-redis/main.tf) into a secret in AWS Secrets Manager after creation
+- Inject the [RDS config details](https://github.com/ad-signalio/terraform-utils/blob/main/aws/tf-hosted-modules/tf-dt-rds-pg/main.tf) into a secret in AWS Secrets Manager after creation
+- Create and inject [Owning User Credentials](https://github.com/ad-signalio/terraform-utils/blob/main/aws/tf-hosted-modules/tf-dt-application-secrets/main.tf) (the credentials you will log in to the product with). The user name will be the email you specify in the `owning_user_email` variable. Password will be auto generated and stored.
+- Create and inject [API secrets](https://github.com/ad-signalio/terraform-utils/blob/main/aws/tf-hosted-modules/tf-dt-application-secrets/main.tf) (necessary for the code to run) into a secret in AWS Secrets Manager after creation
 
-## Prerequisites
+## Utilising ASCP Quick Start
 
-You will need to create a secret in AWS Secrets Manager with your docker auth token called `match-docker-secret`
+In order to get the the necessary secrets for the Match application quickly, we have created an _optional_ helm chart: [secrets-configuration](https://github.com/ad-signalio/match-reference-architecture/tree/main/optional-add-ons/secrets-configuration).
+
+The chart creates several Kubernetes SecretProviderClass resources that integrate with AWS Secrets Manager, allowing the Match application to securely access secrets stored in AWS without embedding them in the application code or Kubernetes manifests. It also creates a service account that will utilise the IAM role created [here](https://github.com/ad-signalio/terraform-utils/blob/main/aws/tf-hosted-modules/tf-dt-eks/iam.tf).
+
+Please see the chart [README.md](https://github.com/ad-signalio/match-reference-architecture/blob/main/optional-add-ons/secrets-configuration/README.md) for installation instructions.
+
+## Prerequisites: Manually created secrets 
+
+You **must** manually create both the honeybadger and docker secrets in AWS Secrets Manager. 
+
+1. Creating a secret in AWS Secrets Manager with your docker auth token called `match-docker-secret`
 
 ```bash
 aws secretsmanager create-secret \
@@ -222,63 +265,64 @@ aws secretsmanager create-secret \
 --add-replica-regions Region=${your-replicate-region} \
 --secret-string $SECRET_JSON
 ```
+2. Creating a secret in AWS Secrets Manager with your Honeybadger API token. This value will be provided securely by Snicket Labs to you.
 
+```bash
+aws secretsmanager create-secret \
+--name match-honeybadger-secret \
+--description "Honeybadger api secret" \
+--region ${your-region} \
+--add-replica-regions Region=${your-replicate-region} \
+--secret-string $SECRET_API_KEY
+```
+
+## What this reference architecture does NOT include
+
+- External DNS installation
+
+You may use your own DNS solution by manually pointing a DNS CNAME at the Load Balancers DNS address once the match helm chart is installed and configured. See the Helm Chart [Readme](https://github.com/ad-signalio/helm-charts/blob/main/charts/match/README.md#dns) for more information. 
+
+Optionally if you have a domain in Route53 you can may use our module to install [External DNS](https://kubernetes-sigs.github.io/external-dns/) onto the EKS cluster to create DNS entries for you.
+
+Add the following to `infrastructure/main.tf`
 ```hcl
-module "iam_role_for_service_account" {
-  source                     = "git::https://github.com/ad-signalio/terraform-utils-private.git//aws/tf-hosted-modules/tf-dt-iam-roles?ref=v0.0.36-aws-tf-hosted-modules-tf-dt-iam-roles"
-  s3_bucket_name             = "${local.cluster_name}-primary"
-  env_name                   = var.env_name
-  tags                       = var.tags
-  oidc_provider_arn          = module.eks.eks_cluster.oidc_provider_arn
-  oidc_issuer_url            = module.eks.eks_cluster.cluster_oidc_issuer_url
-  kubernetes_namespace       = var.k8s_namespace
-  kubernetes_service_account = "adsignal-match"
-  domain_name                = var.external_domain
-  adsignal_org               = "autoingest"
-  ## if you don't wish to allow access to AWS Secret Manager,
-  ## set allow_aws_secret_manager_access to false
-  ## allow_aws_secret_manager_access = false
-  ## and remove secret_naming_convention var
-  secret_naming_convention   = var.env_name
-}
+module "external_dns_iam" {
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks-aws-external-dns-ctrlr-iam/v1.0.0"
 
-module "elasticache_redis" {
-  source                   = "git::https://github.com/ad-signalio/terraform-utils-private.git//aws/tf-hosted-modules/tf-dt-elasticache-redis?ref=v0.0.35-aws-tf-hosted-modules-tf-dt-elasticache-redis"
-  env_name                 = var.env_name
-  tags                     = var.tags
-  vpc                      = module.vpc.vpc
-  az                       = var.availability_zone_name
-  private_subnets          = module.vpc.private_subnets
-  cidr_block               = module.vpc.vpc_cidr_block
-  ## if you don't wish to allow access to AWS Secret Manager,
-  ## set create_aws_secret to false
-  ## create_aws_secret = false
-  ## and remove secret_naming_convention var
-  secret_naming_convention = var.env_name
-
-  depends_on = [module.eks]
-}
-
-module "rds-postgres" {
-  source                   = "git::https://github.com/ad-signalio/terraform-utils-private.git//aws/tf-hosted-modules/tf-dt-rds-pg?ref=v0.0.35-aws-tf-hosted-modules-tf-dt-rds-pg"
-  env_name                 = var.env_name
-  tags                     = var.tags
-  subnet_ids               = tolist(module.vpc.private_subnets)
-  instance_class           = var.rds_instance_class
-  allocated_storage        = 20
-  max_allocated_storage    = 100
-  vpc_security_group_ids   = [module.eks.eks_cluster_node_sg]
-  k8s_namespace            = var.k8s_namespace
-  ## if you don't wish to allow access to AWS Secret Manager,
-  ## set create_aws_secret to false
-  ## create_aws_secret = false
-  ## and remove secret_naming_convention var
-  secret_naming_convention = var.env_name
-  depends_on               = [module.eks]
-
-  deletion_protection = false
+  oidc_provider_arn = module.eks.eks_cluster.oidc_provider_arn
+  env_name          = module.label.env_name
+  domain_name       = "your-base-domain"
+  use_name_prefix   = true
 }
 ```
+
+This will create the IAM role and corresponding service account to assume the role to allow record management in route 53. 
+
+
+```bash 
+helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
+vi external-dns-config.yaml
+env:
+ - name: AWS_DEFAULT_REGION
+   value: 
+provider:
+  name: aws
+serviceAccount:
+  create: false
+  name: external-dns
+
+helm upgrade --install external-dns external-dns/external-dns  -n kube-system -f external-dns-config.yaml
+```
+
+- Domain and certificate management
+
+It is recommended you bring your own domain, and manage your own certificates. For a quick start, we would recommend registering and managing a domain in Route53.
+
+- SMTP creation
+
+Match will send passwords reset links and notifications to users via email if configured with SMTP credentials. This can be done with an SMTP username and password as kubernetes secrets and configured later when the helm chart is installed. 
+
+If however an STMP service is required AWS SES can be used to provide SMTP credentials, we have not included this in the example `main.tf`.  
 
 ## Configuration
 
@@ -298,7 +342,12 @@ module "rds-postgres" {
 | `storage_shared_storage_size` | EFS shared storage volume size | `100Gi` | `500Gi`, `1Ti` |
 | **Application Configuration** |
 | `external_domain` | Application domain | `test-company.sbox.as-priv.net` | `myapp.prod.as-priv.net` |
-| `k8s_namespace` | Kubernetes namespace | `match` | `production` |
+| `k8s_namespace` | Kubernetes namespace | `match` | `match` |
+| `owning_user_email` | Email of the Admin user to access Match. | - | `ops@your-company.com` |
+| **EKS Configuration** |
+| `access_entries` | Map of extra Cluster access entries. | `{}` | `{ platform_admin = { principal_arn = "arn:aws:iam::123456789012:role/platform-admin" } }` |
+| `secret_naming_convention` | Naming convention for secrets to be accessed by the service account. Recommend using org name as the secret naming convention. | - | `acme` |
+| `use_auto_mode` | Boolean to choose whether to use EKS Auto Mode. | `true` | `false` |
 | **Feature Configuration** |
 | `install_helm_charts` | Enable installation of Helm charts (KEDA, LB Controller) | `true` | `false` |
 
@@ -315,7 +364,7 @@ availability_zone_name = "us-east-1a"
 
 # Network Configuration
 cidr            = "10.25.0.0/16"
-external_domain = "your-company.prod.as-priv.net"
+external_domain = "your-company.your-company.domain"
 
 # Database Configuration
 rds_instance_class = "db.t3.medium"
@@ -324,5 +373,6 @@ rds_instance_class = "db.t3.medium"
 storage_shared_storage_size = "500Gi"
 
 # Application Configuration
-k8s_namespace = "production"
+k8s_namespace = "match"
+owning_user_email      = "admin@your-company.domain"
 ```
