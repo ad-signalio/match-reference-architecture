@@ -137,7 +137,7 @@ module "elasticache_redis" {
 }
 
 module "rds-postgres" {
-  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-rds-pg/v1.0.2"
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-rds-pg/v1.0.3"
 
   env_name               = module.label.env_name
   tags                   = module.label.tags
@@ -152,6 +152,9 @@ module "rds-postgres" {
   ## and remove secret_naming_convention var
   secret_naming_convention = module.label.env_name
   depends_on               = [module.eks]
+  ## defaults to db.m5.xlarge instance size and no AZ replication to keep costs down
+  ## remove entirely to set instance class 
+  minimal_db_config = true
 
   deletion_protection = false
 }
