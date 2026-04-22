@@ -91,8 +91,6 @@ module "eks" {
 module "ingress_resources" {
   source           = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-ingress-resources/v1.0.2"
   eks_cluster_name = module.eks.eks_cluster_name
-
-
 }
 
 module "auto_mode_storage_class" {
@@ -189,5 +187,5 @@ module "keda" {
   depends_on              = [module.eks]
   enabled                 = var.install_helm_charts
   install_crds_separately = false
-  create_match_namespace  = false
+  create_match_namespace  = true
 }
