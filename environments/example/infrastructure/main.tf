@@ -72,15 +72,14 @@ module "vpc" {
 }
 
 module "eks" {
-  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks/v1.0.14"
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks/v1.0.15"
 
-  env_name      = module.label.env_name
-  tags          = module.label.tags
-  subnets_in_az = tolist(local.subnets_in_az)
-
+  env_name                 = module.label.env_name
+  tags                     = module.label.tags
+  subnets_in_az            = tolist(local.subnets_in_az)
+  iam_role_use_name_prefix = false
   vpc_id                   = module.vpc.vpc
   private_subnet_ids       = module.vpc.private_subnets
-  iam_role_use_name_prefix = false
   vpc_cidr_block           = var.cidr
 
   secret_naming_convention = module.label.env_name
