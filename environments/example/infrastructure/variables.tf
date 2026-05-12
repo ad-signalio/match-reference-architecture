@@ -53,15 +53,6 @@ variable "env_additional_id" {
   }
 }
 
-variable "owning_user_email" {
-  description = "Email of the Admin user to access Match."
-  type        = string
-  validation {
-    condition     = can(regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", var.owning_user_email))
-    error_message = "owning_user_email must be a valid email address."
-  }
-}
-
 variable "availability_zone_name" {
   description = "For One Zone systems, specify the AWS Availability Zone in which to create the EKS cluster and EFS."
   type        = string
