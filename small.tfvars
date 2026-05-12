@@ -1,12 +1,17 @@
-# Sample defaults file for match-environment setup script
-# Usage: ./setup.sh --defaults defaults.tfvars
+# Sample defaults file for match-environment setup
 
 # AWS Configuration
 region                 = "us-east-1"
 availability_zone_name = "us-east-1a"
 
 # Basic Configuration
-env_name = "small-example-project"
+env_name               = "prod-example-sm-us1" # Full project name, EKS clusters etc will be named after this
+env_use                = "prod"
+env_id                 = "example" # use your company name here
+env_region             = "us1"
+env_additional_id      = "sm"
+availability_zone_name = "us-east-1a"
+
 
 tags = {
   Environment = "prod"
@@ -14,10 +19,6 @@ tags = {
   ManagedBy   = "Terraform"
   #...
 }
-
-# EKS Configuration
-eks_compute_nodes     = 1
-eks_compute_node_type = "c8i.4xlarge"
 
 # Network and Domain Configuration
 cidr            = "10.25.0.0/16"

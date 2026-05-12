@@ -113,6 +113,7 @@ Recommended actions:
 
 2. **Create environment directory**
    ```bash
+   mkdir -p environments/your-company-name
    cp -r environments/example/infrastructure environments/your-company-name/infrastructure
    cd environments/your-company-name/infrastructure
    ```
@@ -120,12 +121,12 @@ Recommended actions:
 3. **Configure variables**
    ```bash
    # Edit the  an example .tfvars file with your specific values
-   cp <size>.tfvars your-company-name.tfvars
+   cp ../../<size>.tfvars your-company-name.tfvars
    vim your-company-name.tfvars
    # Edit the backend.tf to use your state bucket and statefile
    vim backend.tf
 
-3. **Configure backend and remote state**
+4. **Configure backend and remote state**
 Bring your own remote state store or see [Terraform State](#terraform-state) to create an S3 bucket to use, or provide an existing S3 bucket.
 
 Edit `environments/your-company-name/infrastructure/backend.tf` to use your state bucket and statefile
@@ -142,23 +143,42 @@ terraform {
 }
 ```
 
-4. **Configure variables**
-Configure the TFVARS for your environment, Configuration section https://github.com/ad-signalio/match-reference-architecture/tree/main?tab=readme-ov-file#configuration 
 
+5. **Initialize and deploy**
 
-```bash
-cp <size>.tfvars your-company-name.tfvars
-vim your-company-name.tfvars
-    vim main.tf
+   This architecture manages both AWS resources and Kubernetes resources (storage classes, ingress, KEDA) in a single Terraform configuration. On first deployment the Kubernetes provider cannot authenticate until the EKS cluster exists, so a **two-stage apply** is required.
 
-   ```
-
-4. **Initialize and deploy**
+   **Stage 1 — AWS infrastructure** (EKS cluster, VPC, RDS, Redis, S3, IAM):
    ```bash
    terraform init
-   terraform plan -var-file="your-company-name.tfvars"
+   terraform apply -var-file="your-company-name.tfvars" \
+     -target=module.vpc \
+     -target=module.eks \
+     -target=module.iam_role_for_service_account \
+     -target=module.elasticache_redis \
+     -target=module.rds-postgres \
+     -target=module.s3-active-storage \
+     -target=module.application-secrets
+   ```
+
+   **Update kubeconfig** so subsequent steps can reach the cluster:
+   ```bash
+   aws eks update-kubeconfig --region <your-region> --name <your-env-name>
+   ```
+
+   **Stage 2 — Kubernetes resources** (storage classes, ingress, KEDA):
+   ```bash
    terraform apply -var-file="your-company-name.tfvars"
    ```
+
+   > **Note:** On Terraform 1.14+ you can use `-exclude` flags instead of `-target` for stage 1:
+   > ```bash
+   > terraform apply -var-file="your-company-name.tfvars" \
+   >   -exclude=module.ingress_resources \
+   >   -exclude=module.auto_mode_storage_class \
+   >   -exclude=module.efs \
+   >   -exclude=module.keda
+   > ```
 
 ### Terraform State
 
@@ -180,7 +200,11 @@ initial-state/your-company/
 
 **Usage**:
 ```bash
-cd initial-state/your-company
+cd initial-state
+cp example your-company
+cd your-company
+# Edit bucket name
+vim main.tf
 terraform init
 terraform apply
 ```
@@ -188,25 +212,19 @@ terraform apply
 
 ## Deployment Sizing Options
 
-This reference architecture includes pre-configured sizing templates there are corresponding small.yaml, medium.yaml and large.yaml values in the Match Helm Chart that match these capacities. Work with Ad Signal Technical Services to understand your individual system needs. These configurations are static with the ability to autoscale and are optimized for continuous throughput.
+This reference architecture includes pre-configured sizing templates there are corresponding small.yaml, medium.yaml and large.yaml values in the Match Helm Chart that match these capacities. Work with Ad Signal Technical Services to understand your individual system needs. These configurations are staticly sized RDS instances with the ability to autoscale EKS nodes and are optimized for continuous throughput.
 
 ### Small Deployment
 
-- **Compute**: 1 node c8i.4xlarge (16 vCPU, 32 GB RAM)
 - **Database**: db.m5.4xlarge (16 vCPU, 64 GB RAM)
-- **Throughput**: 1 Hour of content will take approximately 1 hour to process
 
 ### Medium Deployment
 
-- **Compute**: 4 nodes × c8i.4xlarge (16v CPU, 32 GB RAM each)
 - **Database**: db.m5.4xlarge (16 vCPU, 64 GB RAM)
-- **Throughput**: 2.5 Hours of content will take approximately 1 hour to process
 
 ### Large Deployment
 
-- **Compute**: 12 nodes × m8i.4xlarge (16 vCPU, 32 GB RAM each)
 - **Database**: db.m5.4xlarge (16 vCPU, 64 GB RAM)
-- **Throughput**: 7.5 Hours of content will take approximately 1 hour to process
 
 ## Event Driven Autoscaling (KEDA)
 
@@ -347,7 +365,6 @@ If however an STMP service is required AWS SES can be used to provide SMTP crede
 | **EKS Configuration** |
 | `access_entries` | Map of extra Cluster access entries. | `{}` | `{ platform_admin = { principal_arn = "arn:aws:iam::123456789012:role/platform-admin" } }` |
 | `secret_naming_convention` | Naming convention for secrets to be accessed by the service account. Recommend using org name as the secret naming convention. | - | `acme` |
-| `use_auto_mode` | Boolean to choose whether to use EKS Auto Mode. | `true` | `false` |
 | **Feature Configuration** |
 | `install_helm_charts` | Enable installation of Helm charts (KEDA, LB Controller) | `true` | `false` |
 
