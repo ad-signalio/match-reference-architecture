@@ -124,25 +124,26 @@ Recommended actions:
    vim your-company-name.tfvars
    # Edit the backend.tf to use your state bucket and statefile
    vim backend.tf
+  ```
 
-3. **Configure backend and remote state**
-Bring your own remote state store or see [Terraform State](#terraform-state) to create an S3 bucket to use, or provide an existing S3 bucket.
+4. **Configure backend and remote state**
+  Bring your own remote state store or see [Terraform State](#terraform-state) to create an S3 bucket to use, or provide an existing S3 bucket.
 
-Edit `environments/your-company-name/infrastructure/backend.tf` to use your state bucket and statefile
-```
-terraform {
-  backend "s3" {
-    bucket       = "my-s3-bucket"
-    key          = "environments/example/infrastructure/s3/terraform.tfstate"
-    region       = "your-region"
-    use_lockfile = true
-    encrypt      = true
+  Edit `environments/your-company-name/infrastructure/backend.tf` to use your state bucket and statefile
+  ```
+  terraform {
+    backend "s3" {
+      bucket       = "my-s3-bucket"
+      key          = "environments/example/infrastructure/s3/terraform.tfstate"
+      region       = "your-region"
+      use_lockfile = true
+      encrypt      = true
 
+    }
   }
-}
-```
+  ```
 
-4. **Configure variables**
+5. **Configure variables**
 Configure the TFVARS for your environment, Configuration section https://github.com/ad-signalio/match-reference-architecture/tree/main?tab=readme-ov-file#configuration 
 
 
@@ -153,7 +154,7 @@ vim your-company-name.tfvars
 
    ```
 
-4. **Initialize and deploy**
+6. **Initialize and deploy**
    ```bash
    terraform init
    terraform plan -var-file="your-company-name.tfvars"
