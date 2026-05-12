@@ -7,4 +7,11 @@ secretStoreRoleArn: arn:aws:iam::123456789012:role/match-secrets-role # output o
 redisSecretName: match-reference-architecture-redis # output of terraform is redis_secret_name
 smtp:
   enabled: false
-  smtpSecretName: match-reference-architecture-smtp # output of terraform is smtp_secret_name if enabled. 
+  smtpSecretName: match-reference-architecture-smtp # output of terraform is smtp_secret_name if enabled.
+
+k8sSecretNames:
+  rdsPg: match-postgres-credentials # name of the Kubernetes secret created for RDS credentials
+
+secretSyncer:
+  enabled: true
+  image: public.ecr.aws/docker/library/busybox:1.36
