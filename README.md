@@ -171,15 +171,6 @@ terraform {
    terraform apply -var-file="your-company-name.tfvars"
    ```
 
-   > **Note:** On Terraform 1.14+ you can use `-exclude` flags instead of `-target` for stage 1:
-   > ```bash
-   > terraform apply -var-file="your-company-name.tfvars" \
-   >   -exclude=module.ingress_resources \
-   >   -exclude=module.auto_mode_storage_class \
-   >   -exclude=module.efs \
-   >   -exclude=module.keda
-   > ```
-
 ### Terraform State
 
 It's recommended you use a suitable [remote state](https://developer.hashicorp.com/terraform/language/state/remote) data store with Terraform.
