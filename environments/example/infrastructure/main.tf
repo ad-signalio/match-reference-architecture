@@ -140,8 +140,8 @@ module "rds-postgres" {
   tags                   = module.label.tags
   subnet_ids             = tolist(module.vpc.private_subnets)
   instance_class         = var.rds_instance_class
-  allocated_storage      = 20
-  max_allocated_storage  = 100
+  allocated_storage      = var.rds_allocated_storage
+  max_allocated_storage  = var.rds_max_allocated_storage
   vpc_security_group_ids = [module.eks.eks_cluster_node_sg, module.eks.cluster_primary_security_group_id, module.eks.cluster_security_group_id]
   ## if you don't wish to allow access to AWS Secret Manager,
   ## set create_aws_secret to false

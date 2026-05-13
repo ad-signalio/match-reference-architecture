@@ -339,32 +339,60 @@ If however an STMP service is required AWS SES can be used to provide SMTP crede
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
-| **Core Infrastructure** |
-| `env_name` | Environment name | - | `small-example-project`, `prod-acme-corp` |
+| **Environment Naming** |
+| `env_id` | Your company or project identifier, used to name all resources | - | `acme`, `my-company` |
+| `env_use` | Use case for the environment | - | `prod`, `staging`, `test` |
+| `env_region` | Short region identifier appended to resource names | - | `us1`, `eu1` |
+| `env_additional_id` | Optional extra identifier (e.g. sizing suffix) | `""` | `sm`, `lg` |
 | **AWS Configuration** |
 | `region` | AWS region | `us-east-1` | `us-west-2`, `eu-west-1` |
 | `availability_zone_name` | Specific AZ for single-zone resources | - | `us-east-1a` |
 | `cidr` | VPC CIDR block | `10.25.0.0/16` | `10.0.0.0/16` |
 | **Database Configuration** |
 | `rds_instance_class` | RDS PostgreSQL instance class | `db.t3.small` | `db.t3.medium`, `db.r5.large` |
-| **Storage Configuration** |
-| `storage_shared_storage_size` | EFS shared storage volume size | `100Gi` | `500Gi`, `1Ti` |
+| `rds_allocated_storage` | Initial allocated storage in GB for RDS | `20` | `50`, `100` |
+| `rds_max_allocated_storage` | Maximum storage in GB RDS autoscaling can grow to | `100` | `200`, `500` |
 | **Application Configuration** |
-| `external_domain` | Application domain | `test-company.sbox.as-priv.net` | `myapp.prod.as-priv.net` |
+| `external_domain` | Application domain | `example.sbox.as-priv.net` | `myapp.prod.as-priv.net` |
 | `k8s_namespace` | Kubernetes namespace | `match` | `match` |
-| `owning_user_email` | Email of the Admin user to access Match. | - | `ops@your-company.com` |
 | **EKS Configuration** |
-| `access_entries` | Map of extra Cluster access entries. | `{}` | `{ platform_admin = { principal_arn = "arn:aws:iam::123456789012:role/platform-admin" } }` |
-| `secret_naming_convention` | Naming convention for secrets to be accessed by the service account. Recommend using org name as the secret naming convention. | - | `acme` |
+| `admin_access_role_names` | Names of pre-existing IAM roles to grant EKS cluster admin access. See [EKS Admin Access](#eks-admin-access). | `[]` | `["Infra", "DevOps"]` |
+| `admin_access_sso_permission_set_names` | Names of pre-existing SSO permission sets to grant EKS cluster admin access. See [EKS Admin Access](#eks-admin-access). | `[]` | `["infra", "developer"]` |
 | **Feature Configuration** |
 | `install_helm_charts` | Enable installation of Helm charts (KEDA, LB Controller) | `true` | `false` |
+
+### EKS Admin Access
+
+Two variables control which AWS identities are granted `AmazonEKSClusterAdminPolicy` on the EKS cluster:
+
+| Variable | Type | Purpose |
+|----------|------|---------|
+| `admin_access_role_names` | `list(string)` | Names of existing IAM roles to grant cluster admin access |
+| `admin_access_sso_permission_set_names` | `list(string)` | Names of existing AWS SSO permission sets to grant cluster admin access |
+
+**These roles and permission sets must already exist in your AWS account.** This match reference architecture does not create them — it only grants them EKS cluster admin access. You are responsible for creating them via your own Terraform, the AWS console, or other IAM tooling.
+
+> **Important:** If neither variable is set, no EKS admin access entries are configured and you will have no `kubectl` access to the cluster. The first `terraform apply` (Stage 1 — AWS infrastructure) will succeed, but without working `kubectl` credentials the second apply (Stage 2 — Kubernetes resources) will fail. You must populate at least one of these variables before running Stage 2.
+
+```hcl
+# Grant access to an IAM role (must already exist in your AWS account)
+admin_access_role_names = ["Infra", "DevOps"]
+
+# Grant access to SSO permission sets (must already exist in your AWS account)
+# The reference architecture looks these up by matching AWSReservedSSO_<name>.* in the SSO path
+admin_access_sso_permission_set_names = ["infra", "developer"]
+```
 
 ### Example Configuration
 
 ```hcl
 # your-env.tfvars
-# Core Infrastructure
-env_name = "prod-your-company"
+
+# Environment Naming (combined to form resource names, e.g. prod-acme-md-us1)
+env_use           = "prod"
+env_id            = "acme"
+env_additional_id = "md"
+env_region        = "us1"
 
 # AWS Configuration
 region                 = "us-east-1"
@@ -375,12 +403,9 @@ cidr            = "10.25.0.0/16"
 external_domain = "your-company.your-company.domain"
 
 # Database Configuration
-rds_instance_class = "db.t3.medium"
+rds_instance_class = "db.m5.4xlarge"
 
-# Storage Configuration
-storage_shared_storage_size = "500Gi"
-
-# Application Configuration
-k8s_namespace = "match"
-owning_user_email      = "admin@your-company.domain"
+# EKS Admin Access (pre-existing roles/permission sets — see EKS Admin Access section)
+admin_access_sso_permission_set_names = ["infra"]
+admin_access_role_names               = ["Infra"]
 ```

@@ -84,14 +84,26 @@ variable "rds_instance_class" {
   }
 }
 
+variable "rds_allocated_storage" {
+  description = "Initial allocated storage in GB for the RDS PostgreSQL instance"
+  type        = number
+  default     = 20
+}
+
+variable "rds_max_allocated_storage" {
+  description = "Maximum storage in GB that RDS autoscaling can grow to"
+  type        = number
+  default     = 100
+}
+
 variable "admin_access_sso_permission_set_names" {
-  description = "SSO Permission Set Names for admin access"
+  description = "Names of pre-existing AWS SSO permission sets to grant EKS cluster admin access. These must already exist in your AWS account — this match reference architecture will not create them. Example: [\"infra\", \"developer\"]"
   type        = list(string)
   default     = []
 }
 
 variable "admin_access_role_names" {
-  description = "Role Names for admin access"
+  description = "Names of pre-existing AWS IAM roles to grant EKS cluster admin access. These must already exist in your AWS account — this match reference architecture will not create them. Example: [\"Infra\", \"DevOps\"]"
   type        = list(string)
   default     = []
 }
