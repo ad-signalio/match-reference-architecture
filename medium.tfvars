@@ -7,15 +7,25 @@ availability_zone_name = "us-east-1a"
 
 
 # Basic Configuration
-env_name               = "prod-example-md-us1" # Full project name, EKS clusters etc will be named after this
 env_use                = "prod"
 env_id                 = "example" # use your company name here
 env_region             = "us1"
 env_additional_id      = "md"
 availability_zone_name = "us-east-1a"
 
-# admin_access_sso_permission_set_names = [] add names of any SSO permission sets here, eg "infra", "developer"
-# admin_access_role_names = [] add names of any IAM roles here, eg "Infra"
+
+# EKS Admin Access
+# Provide names of pre-existing IAM roles and/or SSO permission sets in your AWS account
+# to grant EKS cluster admin access. This match reference architecture does not create
+# these — it only grants them cluster admin access. You are responsible for creating
+# them via your own Terraform or IAM tooling.
+#
+# NOTE: If neither variable is set, no EKS admin access is configured. The first
+# terraform apply (AWS infrastructure) will succeed, but you will have no kubectl
+# access and the second terraform apply (Kubernetes resources) will fail.
+#
+# admin_access_sso_permission_set_names = ["infra", "developer"]
+# admin_access_role_names               = ["Infra"]
 
 
 tags = {
@@ -33,5 +43,6 @@ external_domain = "my-company.sbox.as-priv.net"
 # cust_id = "my-company"
 
 
-rds_instance_class          = "db.m5.4xlarge"
-storage_shared_storage_size = "200Gi"
+rds_instance_class        = "db.m5.4xlarge"
+rds_allocated_storage     = 50
+rds_max_allocated_storage = 200
