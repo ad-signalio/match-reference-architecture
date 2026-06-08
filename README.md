@@ -4,6 +4,13 @@
 
 A Terraform-based reference architecture for deploying match environments on AWS EKS.
 
+### Repository layout (multi-cloud)
+
+The repository is organised per cloud provider:
+
+- `environments/aws/` and `initial-state/aws/` — the AWS reference architecture (complete, documented below)
+- `environments/gcp/` and `initial-state/gcp/` — **placeholders only**: skeleton files for the GCP reference architecture, which is under development and not yet usable
+
 > **Important Note**: This reference architecture is intended as a **guide and starting point**. You may adapt it to work with your existing infrastructure, including existing EKS clusters, VPCs, or other AWS resources. The architecture is modular and can be customized to integrate with your current setup rather than creating everything from scratch.
 
 The resultant environment will be suitable for installing the `helm-match` chart to provision the Match environment.
@@ -34,7 +41,7 @@ Before using this reference architecture, ensure you have:
 
 ### Provider Version Requirements
 
-This reference architecture requires the following provider versions (as defined in `environments/example/infrastructure/provider.tf`):
+This reference architecture requires the following provider versions (as defined in `environments/aws/example/infrastructure/provider.tf`):
 
 | Provider | Minimum Version | Purpose |
 |----------|----------------|---------|
@@ -113,15 +120,15 @@ Recommended actions:
 
 2. **Create environment directory**
    ```bash
-   mkdir -p environments/your-company-name
-   cp -r environments/example/infrastructure environments/your-company-name/infrastructure
-   cd environments/your-company-name/infrastructure
+   mkdir -p environments/aws/your-company-name
+   cp -r environments/aws/example/infrastructure environments/aws/your-company-name/infrastructure
+   cd environments/aws/your-company-name/infrastructure
    ```
 
 3. **Configure variables**
    ```bash
    # Edit the  an example .tfvars file with your specific values
-   cp ../../<size>.tfvars your-company-name.tfvars
+   cp ../../example/<size>.tfvars your-company-name.tfvars
    vim your-company-name.tfvars
    # Edit the backend.tf to use your state bucket and statefile
    vim backend.tf
@@ -129,12 +136,12 @@ Recommended actions:
 4. **Configure backend and remote state**
 Bring your own remote state store or see [Terraform State](#terraform-state) to create an S3 bucket to use, or provide an existing S3 bucket.
 
-Edit `environments/your-company-name/infrastructure/backend.tf` to use your state bucket and statefile
+Edit `environments/aws/your-company-name/infrastructure/backend.tf` to use your state bucket and statefile
 ```
 terraform {
   backend "s3" {
     bucket       = "my-s3-bucket"
-    key          = "environments/example/infrastructure/s3/terraform.tfstate"
+    key          = "environments/aws/your-company-name/infrastructure/s3/terraform.tfstate"
     region       = "your-region"
     use_lockfile = true
     encrypt      = true
@@ -175,13 +182,13 @@ terraform {
 
 It's recommended you use a suitable [remote state](https://developer.hashicorp.com/terraform/language/state/remote) data store with Terraform.
 
-The `initial-state/` directory contains a Terraform configurations for creating an S3 state bucket for remote terraform state storage. 
+The `initial-state/` directory contains Terraform configurations for creating a state bucket for remote terraform state storage: `aws/` (S3, documented below) and `gcp/` (GCS — see `initial-state/gcp/example/README.md`, including the bootstrap ordering). 
 
 
 Each initial-state environment contains:
 
 ```
-initial-state/your-company/
+initial-state/aws/your-company/
 ├── main.tf               # S3 state bucket module configuration
 ├── providers.tf          # AWS provider configuration
 └── outputs.tf            # Bucket information outputs
@@ -191,8 +198,8 @@ initial-state/your-company/
 
 **Usage**:
 ```bash
-cd initial-state
-cp example your-company
+cd initial-state/aws
+cp -r example your-company
 cd your-company
 # Edit bucket name
 vim main.tf
