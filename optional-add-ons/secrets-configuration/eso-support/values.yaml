@@ -1,0 +1,43 @@
+# Placeholder values — replace before installing.
+namespace: match
+
+# GCP project + cluster (for the SecretStore's Workload Identity auth)
+projectID: my-gcp-project
+clusterName: match-reference-architecture
+clusterLocation: us-central1 # GKE cluster location (region or zone)
+
+refreshInterval: 1h
+
+# KSA the SecretStore authenticates as. Bind it (in Terraform via
+# tf-dt-workload-identity, use_existing_k8s_sa=true) to a GSA holding
+# roles/secretmanager.secretAccessor, and set its email below for the annotation.
+serviceAccount:
+  name: match-secrets
+  gcpServiceAccount: "" # GSA email -> iam.gke.io/gcp-service-account
+
+secretStore:
+  name: gcp-secret-store
+
+# GCP Secret Manager secret names (Terraform outputs / manually created).
+secretNames:
+  cloudSql: match-reference-architecture-cloud-sql # tf-dt-cloud-sql secret_id (sc-22519)
+  redis: match-reference-architecture-redis        # tf-dt-memorystore secret_id (sc-22520)
+  api: match-reference-architecture-api-secrets    # tf-dt-application-secrets (sc-22740)
+  user: match-reference-architecture-user-password # tf-dt-application-secrets (sc-22740)
+  docker: match-docker-secret                      # manually created (gcloud)
+  honeybadger: match-honeybadger-secret            # manually created (gcloud)
+
+# k8s Secret names produced. MUST match the ascp-support outputs so the app
+# deployment is identical on AWS and GCP.
+k8sSecretNames:
+  rdsPg: match-postgres-credentials
+  api: match-api-secrets
+  user: match-owning-user-credentials
+  redis: "" # empty -> defaults to "<clusterName>-redis" (mirrors ascp-support)
+  docker: dockerconfig
+  honeybadger: honeybadger-api-key
+
+smtp:
+  enabled: false
+  secretName: match-reference-architecture-smtp
+  k8sSecretName: smtp-secrets
