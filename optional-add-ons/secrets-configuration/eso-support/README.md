@@ -17,8 +17,32 @@ GKE Workload Identity. Produces the **same Kubernetes Secrets** (names + keys) a
 3. **The source secrets exist** in GCP Secret Manager:
    - Cloud SQL (`tf-dt-cloud-sql`) and Memorystore (`tf-dt-memorystore`) write theirs.
    - API + owning-user secrets: `tf-dt-application-secrets` (sc-22740).
-   - `match-docker-secret` + `match-honeybadger-secret`: created manually (see the
-     top-level README's GCP secrets section).
+   - `match-docker-secret` + `match-honeybadger-secret`: created manually (below).
+
+## Prerequisites: manually created secrets (GCP)
+
+The GCP equivalents of the AWS manually-created secrets. GCP Secret Manager
+stores plain string values (no per-secret regions/replication flags like AWS).
+
+1. **Docker registry credentials** — the dockerconfigjson, stored as `match-docker-secret`:
+
+   ```bash
+   # $SECRET_JSON is your docker config json (a single-line JSON string)
+   printf '%s' "$SECRET_JSON" | gcloud secrets create match-docker-secret \
+     --project "$PROJECT_ID" --data-file=-
+   ```
+
+2. **Honeybadger API token** (provided securely by Snicket Labs), stored as `match-honeybadger-secret`:
+
+   ```bash
+   printf '%s' "$HONEYBADGER_API_KEY" | gcloud secrets create match-honeybadger-secret \
+     --project "$PROJECT_ID" --data-file=-
+   ```
+
+   (To rotate either later: `gcloud secrets versions add <name> --project "$PROJECT_ID" --data-file=-`.)
+
+The ESO GSA's `roles/secretmanager.secretAccessor` (granted by `tf-dt-workload-identity`)
+covers reading these alongside the Terraform-created secrets.
 
 ## What it creates
 
