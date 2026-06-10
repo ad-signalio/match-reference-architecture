@@ -50,7 +50,8 @@ covers reading these alongside the Terraform-created secrets.
 - A **`ServiceAccount`** carrying the `iam.gke.io/gcp-service-account` annotation.
 - **`ExternalSecret`s** producing: `match-postgres-credentials`, `match-api-secrets`,
   `match-owning-user-credentials`, `<clusterName>-redis`, `dockerconfig`,
-  `honeybadger-api-key`, and (optional) `smtp-secrets`.
+  `honeybadger-api-key`, `match-s3-credentials` (GCS S3-interop HMAC, sc-22742),
+  and (optional) `smtp-secrets`.
 
 ## Open reconciliation points (flagged in templates)
 

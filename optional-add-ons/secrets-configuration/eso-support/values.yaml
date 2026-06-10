@@ -41,3 +41,11 @@ smtp:
   enabled: false
   secretName: match-reference-architecture-smtp
   k8sSecretName: smtp-secrets
+
+# GCS S3-interop HMAC creds for Active Storage (sc-22742). GCP-only — on AWS the
+# app uses IRSA, so there is no static-credentials Secret. Disable when using
+# native GCS + Workload Identity instead.
+s3:
+  enabled: true
+  secretName: match-reference-architecture-gcs-hmac # tf-dt-gcs-active-storage hmac_secret_name
+  k8sSecretName: match-s3-credentials               # consumed by helm-match (S3_ACCESS_KEY/S3_SECRET_KEY)
