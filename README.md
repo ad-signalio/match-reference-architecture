@@ -182,7 +182,7 @@ terraform {
 
 It's recommended you use a suitable [remote state](https://developer.hashicorp.com/terraform/language/state/remote) data store with Terraform.
 
-The `initial-state/` directory contains a Terraform configurations for creating an S3 state bucket for remote terraform state storage. 
+The `initial-state/` directory contains Terraform configurations for creating a state bucket for remote terraform state storage: `aws/` (S3, documented below) and `gcp/` (GCS — see `initial-state/gcp/example/README.md`, including the bootstrap ordering). 
 
 
 Each initial-state environment contains:
