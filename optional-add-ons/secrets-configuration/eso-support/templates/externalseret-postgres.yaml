@@ -1,6 +1,3 @@
-# Cloud SQL / RDS credentials -> match-postgres-credentials (same k8s Secret as ascp-support).
-# ExternalSecrets are cloud-agnostic: only the secretStoreRef differs per cloud.
-# Note: the GCP Cloud SQL secret stores "dbname"; the app's k8s key is "db_name" — remapped here.
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
