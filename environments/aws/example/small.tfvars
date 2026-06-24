@@ -5,11 +5,10 @@ region                 = "us-east-1"
 availability_zone_name = "us-east-1a"
 
 # Basic Configuration
-env_use                = "prod"
-env_id                 = "example" # use your company name here
-env_region             = "us1"
-env_additional_id      = "sm"
-availability_zone_name = "us-east-1a"
+env_use           = "prod"
+env_id            = "example" # use your company name here
+env_region        = "us1"
+env_additional_id = "sm"
 
 # EKS Admin Access
 # Provide names of pre-existing IAM roles and/or SSO permission sets in your AWS account
