@@ -1,0 +1,6 @@
+gcp_project_id       = "gcp-client-hosted-sandbox"
+gcp_project_number   = "yournumberhere"
+region               = "us-central1"
+zone                 = "us-central1-a"
+env_id               = "sandbox-testing"
+cloudflare_api_token = "blahblah"
