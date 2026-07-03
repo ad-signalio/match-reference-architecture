@@ -4,7 +4,7 @@ variable "gcp_project_id" {
 }
 
 variable "gcp_project_number" {
-  description = "GCP project number (12-digits). Only for the few places that require the numeric form (e.g. service-agent SA emails). Most things want gcp_project_id."
+  description = "GCP project number (12-digit, e.g. 778387110885). Only for the few places that require the numeric form (e.g. service-agent SA emails). Most things want gcp_project_id."
   type        = string
 }
 

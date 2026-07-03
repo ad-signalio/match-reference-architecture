@@ -1,3 +1,9 @@
+<!---
+title: Match Environment
+folder: "Technical Documentation"
+status: 2
+-->
+
 # Match Environment Reference Architecture
 
 A Terraform-based reference architecture for deploying Match environments. It provisions a complete environment - Kubernetes cluster, database, cache, object storage, shared storage, secrets, autoscaling, and ingress - onto which the `helm-match` chart is installed.
