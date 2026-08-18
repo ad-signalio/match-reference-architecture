@@ -32,10 +32,12 @@ locals {
 provider "aws" {
   region = var.region
 
-  # Backstop for resources not passed module tags. Module tags are what reach
-  # EC2 instances, via the EKS node group's launch template.
+  # Backstop for anything not created through a module, carrying the same set the
+  # modules get so the two cannot drift. Modules are still tagged explicitly:
+  # default_tags does not populate the EKS launch template's tag_specifications,
+  # which is what reaches EC2 instances.
   default_tags {
-    tags = local.prm_tags
+    tags = merge(module.label.tags, local.prm_tags)
   }
 }
 
