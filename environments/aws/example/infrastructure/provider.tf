@@ -21,8 +21,22 @@ terraform {
   }
 }
 
+locals {
+  # AWS Partner Revenue Measurement tag. Empty unless
+  # aws_marketplace_product_code is set. See docs/aws-marketplace-attribution.md.
+  prm_tags = var.aws_marketplace_product_code == "" ? {} : {
+    "aws-apn-id" = "pc:${var.aws_marketplace_product_code}"
+  }
+}
+
 provider "aws" {
   region = var.region
+
+  # Backstop for resources not passed module tags. Module tags are what reach
+  # EC2 instances, via the EKS node group's launch template.
+  default_tags {
+    tags = local.prm_tags
+  }
 }
 
 provider "kubernetes" {

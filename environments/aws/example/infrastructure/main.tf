@@ -66,7 +66,7 @@ locals {
 module "vpc" {
   source                  = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-vpc/v1.0.0"
   env_name                = module.label.env_name
-  tags                    = module.label.tags
+  tags                    = merge(module.label.tags, local.prm_tags)
   cidr                    = var.cidr
   availability_zone_count = 2
 }
@@ -75,7 +75,7 @@ module "eks" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks/v1.0.16"
 
   env_name                 = module.label.env_name
-  tags                     = module.label.tags
+  tags                     = merge(module.label.tags, local.prm_tags)
   subnets_in_az            = tolist(local.subnets_in_az)
   iam_role_use_name_prefix = false
   vpc_id                   = module.vpc.vpc
@@ -101,7 +101,7 @@ module "iam_role_for_service_account" {
 
   s3_bucket_name             = "${local.cluster_name}-primary"
   env_name                   = module.label.env_name
-  tags                       = module.label.tags
+  tags                       = merge(module.label.tags, local.prm_tags)
   oidc_provider_arn          = module.eks.eks_cluster.oidc_provider_arn
   oidc_issuer_url            = module.eks.eks_cluster.cluster_oidc_issuer_url
   kubernetes_namespace       = var.k8s_namespace
@@ -119,7 +119,7 @@ module "elasticache_redis" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-elasticache-redis/v1.0.1"
 
   env_name        = module.label.env_name
-  tags            = module.label.tags
+  tags            = merge(module.label.tags, local.prm_tags)
   vpc             = module.vpc.vpc
   az              = var.availability_zone_name
   private_subnets = module.vpc.private_subnets
@@ -137,7 +137,7 @@ module "rds-postgres" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-rds-pg/v1.0.2"
 
   env_name               = module.label.env_name
-  tags                   = module.label.tags
+  tags                   = merge(module.label.tags, local.prm_tags)
   subnet_ids             = tolist(module.vpc.private_subnets)
   instance_class         = var.rds_instance_class
   allocated_storage      = var.rds_allocated_storage
@@ -157,7 +157,7 @@ module "efs" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-efs/v1.0.7"
 
   env_name               = module.label.env_name
-  tags                   = module.label.tags
+  tags                   = merge(module.label.tags, local.prm_tags)
   cluster_name_prefix    = local.cluster_name
   private_subnets        = module.vpc.private_subnets_detail
   vpc_security_group_ids = [module.eks.eks_cluster_node_sg, module.eks.cluster_primary_security_group_id, module.eks.cluster_security_group_id]
@@ -168,14 +168,14 @@ module "s3-active-storage" {
 
   env_name = module.label.env_name
   app_url  = local.app_url
-  tags     = module.label.tags
+  tags     = merge(module.label.tags, local.prm_tags)
 }
 
 module "application-secrets" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-application-secrets/v1.0.4"
 
   env_name                 = module.label.env_name
-  tags                     = module.label.tags
+  tags                     = merge(module.label.tags, local.prm_tags)
   secret_naming_convention = module.label.env_name
 }
 

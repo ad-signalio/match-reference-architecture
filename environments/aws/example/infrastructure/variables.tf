@@ -113,3 +113,12 @@ variable "install_helm_charts" {
   type        = bool
   default     = true
 }
+variable "aws_marketplace_product_code" {
+  description = "Optional AWS Marketplace product code. When set, resources are tagged aws-apn-id = pc:<code> for vendor revenue attribution. Empty disables it. Use the product code, not the prod-... Product ID."
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.aws_marketplace_product_code == "" || can(regex("^[a-z0-9]+$", var.aws_marketplace_product_code))
+    error_message = "aws_marketplace_product_code must be the alphanumeric product code, not the prod-... Product ID, or empty to disable."
+  }
+}
