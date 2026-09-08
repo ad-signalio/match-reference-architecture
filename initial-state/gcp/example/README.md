@@ -1,3 +1,9 @@
+<!---
+title: GCP Initial State — GCS Terraform State Bucket
+folder: "Technical Documentation"
+status: 2
+-->
+
 # GCP initial state — GCS Terraform state bucket
 
 Creates the GCS bucket used for remote Terraform state storage — the GCP
