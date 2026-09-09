@@ -21,8 +21,26 @@ terraform {
   }
 }
 
+locals {
+  # AWS Partner Revenue Measurement tag, attributing this account's spend to the
+  # software vendor. Set aws_marketplace_product_code on deployments purchased
+  # through AWS Marketplace; empty everywhere else.
+  # https://docs.aws.amazon.com/PRM/latest/aws-prm-onboarding-guide/resource-tagging.html
+  prm_tags = var.aws_marketplace_product_code == "" ? {} : {
+    "aws-apn-id" = "pc:${var.aws_marketplace_product_code}"
+  }
+}
+
 provider "aws" {
   region = var.region
+
+  # Backstop for anything not created through a module, carrying the same set the
+  # modules get so the two cannot drift. Modules are still tagged explicitly:
+  # default_tags does not populate the EKS launch template's tag_specifications,
+  # which is what reaches EC2 instances.
+  default_tags {
+    tags = merge(module.label.tags, local.prm_tags)
+  }
 }
 
 provider "kubernetes" {

@@ -86,7 +86,7 @@ module "cloud_sql" {
   tier       = "db-custom-1-3840" # smallest tier that supports private IP (db-custom-1-3840 = 1 vCPU, 3.75 GiB RAM)
 
   # self_link (ID-form) not network_id: the VPC runs on the project NUMBER, so
-  # network_id is "projects/projectid/..." which Cloud SQL rejects (project id
+  # network_id is "projects/778387110885/..." which Cloud SQL rejects (project id
   # must start with a lowercase letter). The self-link carries the project ID.
   private_network    = module.vpc.network_self_link
   allocated_ip_range = module.vpc.psa_range_name
