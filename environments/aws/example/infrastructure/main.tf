@@ -179,11 +179,30 @@ module "application-secrets" {
   secret_naming_convention = module.label.env_name
 }
 
+module "secret_provider_classes" {
+  source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-eks-secret-provider-classes/v1.0.0"
+
+  depends_on = [module.eks]
+  enabled    = true
+
+  # Owns the match namespace, so keda's create_match_namespace is false: these
+  # secrets have to exist before anything that consumes them.
+  create_namespace = true
+
+  cluster_name          = module.eks.eks_cluster_name
+  secret_store_role_arn = module.eks.secrets_csi_irsa_role_arn
+
+  api_secret_name    = module.application-secrets.api_secret_name
+  user_secret_name   = module.application-secrets.user_secret_name
+  rds_pg_secret_name = module.rds-postgres.rds_pg_secret_name
+  redis_secret_name  = module.elasticache_redis.redis_secret_name
+}
+
 module "keda" {
   source = "git::https://github.com/ad-signalio/terraform-utils.git?ref=generic/tf-hosted-modules/tf-dt-keda/v1.0.5"
 
   depends_on              = [module.eks]
   enabled                 = var.install_helm_charts
   install_crds_separately = false
-  create_match_namespace  = true
+  create_match_namespace  = false
 }
