@@ -135,3 +135,61 @@ variable "k8s_service_account" {
   type        = string
   default     = "adsignal-match"
 }
+
+variable "expose_grafana" {
+  description = "Publish Grafana at /grafana on the application host, through the same internet-facing ALB. Off by default: exposing a monitoring UI on the public internet should be a deliberate choice, not a default."
+  type        = bool
+  default     = false
+}
+
+variable "shared_storage_claim_name" {
+  description = "Name of the shared-storage PVC. Defaults to <cluster>-pvc. Set this only when adopting an existing install whose claim is named something else -- changing the name provisions a new volume and orphans the old one."
+  type        = string
+  default     = null
+}
+
+variable "enable_monitoring" {
+  description = "Install kube-prometheus-stack and emit the chart values that make it work here. Turn off if you bring your own Prometheus and Grafana."
+  type        = bool
+  default     = true
+}
+
+variable "owning_user_email" {
+  description = "Email of the instance's owning user, created by the chart's seed job on first install."
+  type        = string
+}
+
+variable "owning_user_first_name" {
+  description = "First name of the owning user."
+  type        = string
+  default     = "Admin"
+}
+
+variable "owning_user_last_name" {
+  description = "Last name of the owning user."
+  type        = string
+  default     = "User"
+}
+
+variable "owning_user_organisation" {
+  description = "Organisation name shown in the application for the owning user."
+  type        = string
+}
+
+variable "tmp_storage_size" {
+  description = "Node-local scratch for each worker pod. Transcodes write here before upload, so it must hold the largest proxy the workers will produce."
+  type        = string
+  default     = "30Gi"
+}
+
+variable "prometheus_storage_size" {
+  description = "Prometheus volume. No backups; sized for retention, not durability."
+  type        = string
+  default     = "10Gi"
+}
+
+variable "grafana_storage_size" {
+  description = "Grafana volume. Holds dashboards and its own database."
+  type        = string
+  default     = "10Gi"
+}

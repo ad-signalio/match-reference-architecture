@@ -207,16 +207,11 @@ your-environment/
 
 ## Generating the chart values
 
-Terraform writes the values file for you. Nothing in it has to be filled in by
-hand:
+Terraform writes the values file. The customer fills nothing in:
 
 ```bash
 terraform output -raw match_values_yaml > values.yaml
-```
 
-Paste that into distr, or use it directly:
-
-```bash
 helm upgrade --install match adsignal/adsignal-match \
   -n match --create-namespace \
   -f values.yaml \
@@ -224,34 +219,48 @@ helm upgrade --install match adsignal/adsignal-match \
   --set image.tag=<release>
 ```
 
-**Order matters.** The size preset merges *last* and will silently win over
-anything the generated file also sets. Put your own overrides in a third file
-after it, not before.
+**Order matters.** The size preset merges *last* and silently wins over anything
+the generated file also sets. Put your own overrides in a third file after it.
 
-Every value comes from a module output rather than the console:
+This stack decides more than infrastructure — whether KEDA is installed, whether
+monitoring is installed — so it emits the chart values that follow from those
+decisions rather than leaving them to be restated by hand and drift:
+
+| decision | variable | what it puts in the values |
+|---|---|---|
+| KEDA | `install_helm_charts` | `kedaAutoScaling.enabled`, which switches the chart between ScaledJobs and static Deployments |
+| monitoring | `enable_monitoring` | the whole `monitoring` and `kube-prometheus-stack` block — CloudWatch role, storage classes, scrape selectors, Grafana persistence |
+| Grafana on the public ALB | `expose_grafana` (**default false**) | the `/grafana` ingress and subpath config |
+
+Facts read back from modules rather than the console:
 
 | value | from |
 |---|---|
 | `serviceAccount.annotations` IRSA role | `tf-dt-iam-roles` |
 | `storage.sharedStorage.storageClassName` | `tf-dt-efs` |
 | `sidekiq.redisServerUrl` / `redisClientUrl` | `tf-dt-elasticache-redis` |
+| `postgres.database` / `.username` / `.port` | `tf-dt-rds-pg` |
 | `s3.primaryBucket` | `tf-dt-s3-active-storage` |
 | `ingress.className` | `tf-dt-ingress-resources` |
 | `monitoring.awsDashboards.cloudwatch.assumeRoleArn` | `tf-dt-iam-roles` |
-| Grafana and Prometheus `storageClassName` | `tf-dt-auto-mode-efs-storage-class` |
-| `postgres`, `secretKeys`, `owningUser` | `tf-dt-eks-secret-provider-classes` |
+| Grafana + Prometheus `storageClassName` | `tf-dt-auto-mode-efs-storage-class` |
+| `postgres` secret refs, `secretKeys`, `owningUser.secret` | `tf-dt-eks-secret-provider-classes` |
 
-### What it deliberately leaves out
+### What is left for the customer
 
-- `image.*` — the release you are deploying is not infrastructure
-- `owningUser.email` and the rest of the identity block
-- the environment size preset
+Only `image.tag` — the release being deployed, which changes per deploy and does
+not belong in tfvars. The owning user, storage sizes and domain are all tfvars.
 
 ### It contains no secrets
 
-Only names, ARNs and endpoints. Secret *material* stays in Secrets Manager and
+Names, ARNs and endpoints only. Secret *material* stays in Secrets Manager and
 reaches the cluster through the CSI driver, so the generated file is safe to
 paste into a deployment UI or commit alongside your environment.
+
+### Adopting an existing install
+
+Set `shared_storage_claim_name` to the PVC you already have. Letting it default
+renames the claim, which provisions a **new** volume and orphans the old one.
 
 ## Secrets Management
 
