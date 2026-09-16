@@ -67,6 +67,11 @@ output "private_subnets_detail" {
   description = "Map objects of private subnets"
   value       = module.vpc.private_subnets_detail
 }
+output "match_values_yaml" {
+  description = "The complete values file for the match chart, built from this stack. Write it out with `terraform output -raw match_values_yaml > values.yaml`, then layer the environment size preset after it. Contains names, ARNs and endpoints only -- no secret material, which stays in Secrets Manager and reaches the cluster through the CSI driver."
+  value       = yamlencode(local.match_values)
+}
+
 output "match_helm_values" {
   description = "Values the match chart needs so it consumes the synced secrets instead of generating its own. `terraform output -raw match_helm_values > secrets.yaml`."
   value       = module.secret_provider_classes.match_helm_values

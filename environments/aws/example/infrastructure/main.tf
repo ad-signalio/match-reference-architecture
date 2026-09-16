@@ -105,7 +105,7 @@ module "iam_role_for_service_account" {
   oidc_provider_arn          = module.eks.eks_cluster.oidc_provider_arn
   oidc_issuer_url            = module.eks.eks_cluster.cluster_oidc_issuer_url
   kubernetes_namespace       = var.k8s_namespace
-  kubernetes_service_account = "adsignal-match"
+  kubernetes_service_account = var.k8s_service_account
   domain_name                = var.external_domain
   adsignal_org               = "autoingest"
   ## if you don't wish to allow access to AWS Secret Manager,

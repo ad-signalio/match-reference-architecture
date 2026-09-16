@@ -205,6 +205,54 @@ your-environment/
 └── your-env.tfvars      # Environment-specific values
 ```
 
+## Generating the chart values
+
+Terraform writes the values file for you. Nothing in it has to be filled in by
+hand:
+
+```bash
+terraform output -raw match_values_yaml > values.yaml
+```
+
+Paste that into distr, or use it directly:
+
+```bash
+helm upgrade --install match adsignal/adsignal-match \
+  -n match --create-namespace \
+  -f values.yaml \
+  -f <chart>/environment-sizes/medium/medium.yaml \
+  --set image.tag=<release>
+```
+
+**Order matters.** The size preset merges *last* and will silently win over
+anything the generated file also sets. Put your own overrides in a third file
+after it, not before.
+
+Every value comes from a module output rather than the console:
+
+| value | from |
+|---|---|
+| `serviceAccount.annotations` IRSA role | `tf-dt-iam-roles` |
+| `storage.sharedStorage.storageClassName` | `tf-dt-efs` |
+| `sidekiq.redisServerUrl` / `redisClientUrl` | `tf-dt-elasticache-redis` |
+| `s3.primaryBucket` | `tf-dt-s3-active-storage` |
+| `ingress.className` | `tf-dt-ingress-resources` |
+| `monitoring.awsDashboards.cloudwatch.assumeRoleArn` | `tf-dt-iam-roles` |
+| Grafana and Prometheus `storageClassName` | `tf-dt-auto-mode-efs-storage-class` |
+| `postgres`, `secretKeys`, `owningUser` | `tf-dt-eks-secret-provider-classes` |
+
+### What it deliberately leaves out
+
+- `image.*` — the release you are deploying is not infrastructure
+- `owningUser.email` and the rest of the identity block
+- the environment size preset
+
+### It contains no secrets
+
+Only names, ARNs and endpoints. Secret *material* stays in Secrets Manager and
+reaches the cluster through the CSI driver, so the generated file is safe to
+paste into a deployment UI or commit alongside your environment.
+
 ## Secrets Management
 
 The reference implementation use AWS Secrets Manager with the [AWS ASCP Provider](https://docs.aws.amazon.com/secretsmanager/latest/userguide/ascp-eks-installation.html) installed as an EKS add on. 

@@ -123,3 +123,15 @@ variable "aws_marketplace_product_code" {
     error_message = "aws_marketplace_product_code must be the alphanumeric product code, not the prod-... Product ID, or empty to disable."
   }
 }
+
+variable "shared_storage_size" {
+  description = "Size of the EFS-backed shared volume the workers write to. EFS bills on what is stored, not what is requested, so this is a ceiling rather than a cost."
+  type        = string
+  default     = "100Gi"
+}
+
+variable "k8s_service_account" {
+  description = "Service account the match workloads run as. Carries the IRSA annotation, and Grafana reuses it to assume the CloudWatch role."
+  type        = string
+  default     = "adsignal-match"
+}
