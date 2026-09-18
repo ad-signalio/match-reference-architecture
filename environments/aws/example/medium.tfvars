@@ -33,6 +33,17 @@ tags = {
   #...
 }
 
+# Load Balancer Exposure
+# Who can reach Match. The defaults publish it to the internet. See
+# "Load balancer exposure" in README-aws.md before changing them.
+#
+# load_balancer_type = "internal"  # VPC-only; no public access at all
+# load_balancer_ip_ranges = ["203.0.113.0/24", "198.51.100.7/32"]  # your egress ranges
+# snicket_labs_remote_lb_access = false  # only with another support route agreed
+load_balancer_type            = "internet-facing"
+load_balancer_ip_ranges       = ["0.0.0.0/0"]
+snicket_labs_remote_lb_access = true
+
 # Network and Domain Configuration
 cidr            = "10.25.0.0/16"
 external_domain = "my-company.sbox.as-priv.net"

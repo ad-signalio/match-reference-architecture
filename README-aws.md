@@ -21,6 +21,7 @@ A Terraform-based reference architecture for deploying Match environments on **A
 - [Prerequisites: Manually created secrets](#prerequisites-manually-created-secrets)
 - [What this reference architecture does NOT include](#what-this-reference-architecture-does-not-include)
 - [Configuration](#configuration)
+- [Load balancer exposure](#load-balancer-exposure)
 - [Terraform State](./docs/terraform-state.md)
 - [Deployment Sizing Options](./docs/deployment-sizing.md)
 - [Event Driven Autoscaling (KEDA)](./docs/keda.md)
@@ -324,6 +325,10 @@ If however an STMP service is required AWS SES can be used to provide SMTP crede
 | **EKS Configuration** |
 | `admin_access_role_names` | Names of pre-existing IAM roles to grant EKS cluster admin access. See [EKS Admin Access](#eks-admin-access). | `[]` | `["Infra", "DevOps"]` |
 | `admin_access_sso_permission_set_names` | Names of pre-existing SSO permission sets to grant EKS cluster admin access. See [EKS Admin Access](#eks-admin-access). | `[]` | `["infra", "developer"]` |
+| **Load Balancer Exposure** |
+| `load_balancer_type` | Whether the load balancer faces the internet or only your VPC. See [Load balancer exposure](#load-balancer-exposure). | `internet-facing` | `internal` |
+| `load_balancer_ip_ranges` | CIDRs allowed to reach the load balancer. See [Load balancer exposure](#load-balancer-exposure). | `["0.0.0.0/0"]` | `["203.0.113.0/24"]` |
+| `snicket_labs_remote_lb_access` | Admit the Snicket Labs support address alongside your own ranges. See [Load balancer exposure](#load-balancer-exposure). | `true` | `false` |
 | **Feature Configuration** |
 | `install_helm_charts` | Enable installation of Helm charts (KEDA, LB Controller) | `true` | `false` |
 
@@ -374,7 +379,88 @@ rds_instance_class = "db.m5.4xlarge"
 # EKS Admin Access (pre-existing roles/permission sets — see EKS Admin Access section)
 admin_access_sso_permission_set_names = ["infra"]
 admin_access_role_names               = ["Infra"]
+
+# Load Balancer Exposure (see Load balancer exposure section)
+load_balancer_type            = "internet-facing"
+load_balancer_ip_ranges       = ["0.0.0.0/0"]
+snicket_labs_remote_lb_access = true
 ```
+
+## Load balancer exposure
+
+Match is published through an Application Load Balancer that the EKS Auto Mode
+controller creates from the `IngressClassParams` this reference architecture
+manages. Three variables decide who can reach it. Out of the box it is on the
+internet and open to everyone, which is the right starting point for a
+deployment on a domain you own with users spread across the internet, and the
+wrong one if Match should only be reachable from your own networks.
+
+| Variable | Default | What it does |
+|----------|---------|--------------|
+| `load_balancer_type` | `internet-facing` | `internal` gives the load balancer private addresses only. Nothing outside the VPC — or outside what you have peered or VPN'd to it — can reach Match at all. |
+| `load_balancer_ip_ranges` | `["0.0.0.0/0"]` | The CIDRs written into the load balancer's security group. Narrow this to your own egress ranges to keep Match on the internet but reachable only from your offices, VPN or proxy. |
+| `snicket_labs_remote_lb_access` | `true` | Adds the Snicket Labs support address to that security group. |
+
+### Restricting access to your own networks
+
+```hcl
+load_balancer_type      = "internet-facing"
+load_balancer_ip_ranges = [
+  "203.0.113.0/24",  # London office egress
+  "198.51.100.7/32", # VPN concentrator
+]
+```
+
+Everything that talks to Match has to be in this list, not just browsers —
+anything calling the Match API, and any system you have integrated with it. A
+range left out is a connection refused, with nothing in the application logs to
+explain it, so gather them before you apply rather than after.
+
+The terraform run prints the resulting list. Check it against what you asked for:
+
+```bash
+terraform output load_balancer_ip_ranges
+```
+
+### Taking it off the internet
+
+```hcl
+load_balancer_type = "internal"
+```
+
+The load balancer then has private addresses only and `load_balancer_ip_ranges`
+narrows access further within your own network rather than from outside it. You
+are responsible for the route in — VPN, Direct Connect, transit gateway or
+peering — and for DNS resolving to the private address.
+
+### Snicket Labs support access
+
+Our support reaches customer environments from behind an egress proxy in our ops
+VPC, so everything we send arrives from one address, `18.168.92.90/32` — that is
+the entry to expect if you audit the load balancer's security group. With
+`snicket_labs_remote_lb_access = true` that address is added to
+`load_balancer_ip_ranges` for you, so restricting access to your own ranges does
+not lock us out by accident. It is added only where it changes something: an
+internal load balancer is not reachable from our network whatever the security
+group says, and there is nothing to add when the list is already `0.0.0.0/0`.
+
+Setting it to `false`, or choosing `internal`, means we cannot reach a failing
+environment to diagnose it. Do either only once another support route is agreed
+with us.
+
+`false` on its own is not a way to shut us out. While `load_balancer_ip_ranges`
+is still `["0.0.0.0/0"]` the load balancer is reachable by everyone, us
+included, and the flag has denied nothing — terraform says so on apply rather
+than letting you believe otherwise:
+
+```
+│ Warning: Check block assertion failed
+│ snicket_labs_remote_lb_access = false denies Snicket Labs nothing while
+│ load_balancer_ip_ranges allows 0.0.0.0/0 ...
+```
+
+Narrow `load_balancer_ip_ranges` to your own networks, or go `internal`, and the
+flag then means what it says.
 
 ---
 
