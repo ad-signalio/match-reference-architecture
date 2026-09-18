@@ -88,8 +88,30 @@ module "eks" {
 }
 
 module "ingress_resources" {
-  source           = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-ingress-resources/v1.0.2"
+  source           = "git::https://github.com/ad-signalio/terraform-utils.git?ref=aws/tf-hosted-modules/tf-dt-ingress-resources/v1.0.6"
   eks_cluster_name = module.eks.eks_cluster_name
+
+  # Who can reach Match. These default to a public deployment: an
+  # internet-facing load balancer open to everyone. See "Load balancer exposure"
+  # in README-aws.md before narrowing them.
+  scheme                        = var.load_balancer_type
+  inbound_cidrs                 = var.load_balancer_ip_ranges
+  snicket_labs_remote_lb_access = var.snicket_labs_remote_lb_access
+}
+
+# load_balancer_ip_ranges only restricts anything once it stops being 0.0.0.0/0,
+# so turning support access off while leaving it open denies us nothing -- the
+# load balancer is reachable by everyone, us included. Warn rather than fail:
+# the configuration is valid, it just does not mean what it appears to.
+check "snicket_labs_remote_lb_access_has_an_effect" {
+  assert {
+    condition = !(
+      var.snicket_labs_remote_lb_access == false
+      && var.load_balancer_type == "internet-facing"
+      && contains(var.load_balancer_ip_ranges, "0.0.0.0/0")
+    )
+    error_message = "snicket_labs_remote_lb_access = false denies Snicket Labs nothing while load_balancer_ip_ranges allows 0.0.0.0/0: the load balancer is open to everyone. Narrow load_balancer_ip_ranges to your own networks, or set load_balancer_type = \"internal\"."
+  }
 }
 
 module "auto_mode_storage_class" {

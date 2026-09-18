@@ -67,7 +67,13 @@ output "private_subnets_detail" {
   description = "Map objects of private subnets"
   value       = module.vpc.private_subnets_detail
 }
+
 output "match_helm_values" {
   description = "Values the match chart needs so it consumes the synced secrets instead of generating its own. `terraform output -raw match_helm_values > secrets.yaml`."
   value       = module.secret_provider_classes.match_helm_values
+}
+
+output "load_balancer_ip_ranges" {
+  description = "CIDRs the load balancer's security group will admit, the Snicket Labs support address included when snicket_labs_remote_lb_access adds it. Check this against what you asked for before relying on it."
+  value       = module.ingress_resources.inbound_cidrs
 }

@@ -123,3 +123,60 @@ variable "aws_marketplace_product_code" {
     error_message = "aws_marketplace_product_code must be the alphanumeric product code, not the prod-... Product ID, or empty to disable."
   }
 }
+
+variable "load_balancer_type" {
+  description = <<-DESC
+    Whether the load balancer Match is published through faces the internet
+    ("internet-facing") or only the VPC and whatever you have peered or VPN'd to
+    it ("internal").
+
+    Internal removes public access entirely, so load_balancer_ip_ranges then only
+    matters for narrowing access further within your own network. Choosing
+    internal also means Snicket Labs cannot reach the environment for support —
+    agree another route in first.
+  DESC
+  type        = string
+  default     = "internet-facing"
+  validation {
+    condition     = contains(["internet-facing", "internal"], var.load_balancer_type)
+    error_message = "load_balancer_type must be \"internet-facing\" or \"internal\"."
+  }
+}
+
+variable "load_balancer_ip_ranges" {
+  description = <<-DESC
+    CIDRs allowed to reach the load balancer, written into the security group the
+    EKS Auto Mode controller creates for it.
+
+    The default allows the whole internet. Replace it with your own network
+    ranges — office egress, VPN, corporate proxy — if Match should only be
+    reachable from them. Everything your users, and any system that calls the
+    Match API, come from has to be listed here or it will be refused.
+  DESC
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+  validation {
+    condition     = length(var.load_balancer_ip_ranges) > 0
+    error_message = "load_balancer_ip_ranges must list at least one CIDR. To take the load balancer off the internet altogether, set load_balancer_type = \"internal\"."
+  }
+  validation {
+    condition     = alltrue([for cidr in var.load_balancer_ip_ranges : can(cidrhost(cidr, 0))])
+    error_message = "load_balancer_ip_ranges must all be valid CIDR blocks, e.g. 203.0.113.0/24 or 198.51.100.7/32 for a single address."
+  }
+}
+
+variable "snicket_labs_remote_lb_access" {
+  description = <<-DESC
+    Allow Snicket Labs support to reach this environment's load balancer, by
+    adding our egress proxy's address to load_balancer_ip_ranges.
+
+    It is a single address and it only takes effect where it would do something:
+    the load balancer has to be internet-facing, and there is nothing to add when
+    load_balancer_ip_ranges is already open to the internet.
+
+    Set this to false only once you have agreed another support route with us —
+    with no way in, we cannot diagnose a failing environment for you.
+  DESC
+  type        = bool
+  default     = true
+}
