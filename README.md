@@ -1,35 +1,46 @@
-<!---
-title: Match Environment
-folder: "Technical Documentation"
-status: 2
--->
+# This repository has moved
 
-# Match Environment Reference Architecture
+The Snicket Labs Terraform reference architecture now lives at
+**https://github.com/snicketlabs/reference-architecture**
 
-A Terraform-based reference architecture for deploying Match environments. It provisions a complete environment - Kubernetes cluster, database, cache, object storage, shared storage, secrets, autoscaling, and ingress - onto which the `helm-match` chart is installed.
+This repository is no longer updated and is being archived. Everything here is
+a frozen copy of what was published before the move.
 
-> **Important Note**: This reference architecture is intended as a **guide and starting point**. The modules are composable, so you may adapt them to work with an existing project, VPC, or cluster rather than creating everything from scratch.
+## If you have a clone of this repository
 
-## Repository layout (multi-cloud)
+Repoint it and carry on — the histories are linked, so an ordinary pull works
+and your own changes are preserved:
 
-The repository is organised per cloud provider:
+```bash
+git remote set-url origin https://github.com/snicketlabs/reference-architecture.git
+git pull origin main
+```
 
-- `environments/aws/` and `initial-state/aws/` — the AWS reference architecture (EKS)
-- `environments/gcp/` and `initial-state/gcp/` — the GCP reference architecture (GKE)
+Expect a conflict in this README, since you are holding this notice and the new
+repository has the real one. Take theirs:
 
-## Deployment guides
+```bash
+git checkout --theirs README.md && git add README.md && git commit
+```
 
-| Cloud | Guide |
-|---|---|
-| **AWS (EKS)** | **[`README-aws.md`](./README-aws.md)** |
-| **GCP (GKE)** | **[`README-gcp.md`](./README-gcp.md)** |
+If you would rather start clean, a fresh clone of the new repository works too —
+copy your own `.tfvars` and backend configuration across.
 
-## Common reference
+## The optional secrets charts
 
-These topics apply to both clouds and are documented once:
+`optional-add-ons/secrets-configuration` is not in the new repository. Those
+charts are published to the chart repository and you install them from there:
 
-- [Deployment Sizing Options](./docs/deployment-sizing.md)
-- [Terraform State](./docs/terraform-state.md)
-- [Event Driven Autoscaling (KEDA)](./docs/keda.md)
+```bash
+helm repo add ad-signalio https://ad-signalio.github.io/helm-charts
+helm repo update
+helm install secrets-configuration ad-signalio/secrets-configuration-aws -n match
+```
 
-The resultant environment will be suitable for installing the `helm-match` chart to provision the Match environment.
+The templates and values are readable at
+https://github.com/ad-signalio/helm-charts/tree/main/charts
+
+## Why
+
+Ad Signal's public artifacts are moving to the Snicket Labs organisation. The
+content is the same reference architecture, with the naming brought in line.
