@@ -29,16 +29,14 @@ copy your own `.tfvars` and backend configuration across.
 ## The optional secrets charts
 
 `optional-add-ons/secrets-configuration` is not in the new repository. Those
-charts are published to the chart repository and you install them from there:
+charts are published to our chart repository instead, and the install commands
+are in the deployment guides in the new repository:
+[README-aws.md](https://github.com/snicketlabs/reference-architecture/blob/main/README-aws.md)
+and
+[README-gcp.md](https://github.com/snicketlabs/reference-architecture/blob/main/README-gcp.md).
 
-```bash
-helm repo add ad-signalio https://ad-signalio.github.io/helm-charts
-helm repo update
-helm install secrets-configuration ad-signalio/secrets-configuration-aws -n match
-```
-
-The templates and values are readable at
-https://github.com/ad-signalio/helm-charts/tree/main/charts
+They are not repeated here: this repository is archived and cannot be corrected
+when the chart repository moves.
 
 ## Why
 
